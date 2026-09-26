@@ -1,11 +1,7 @@
-<script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-
-	let { children } = $props();
+<script>
+  import '../app.css';
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
-{@render children()}
+<div class="w-screen h-screen overflow-hidden bg-[#020711] text-[#F0F6FC] flex flex-col">
+  <slot />
+</div>
