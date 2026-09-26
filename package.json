@@ -1,16 +1,11 @@
 {
-  "name": "jarvis",
-  "version": "0.1.0",
-  "description": "JARVIS intelligent emergency analysis platform",
+  "name": "@axis/web",
   "private": true,
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "test": "turbo test",
-    "lint": "turbo lint",
-    "typecheck": "turbo typecheck"
-  },
-  "devDependencies": {
-    "turbo": "latest"
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "svelte-check --tsconfig ./jsconfig.json"
   }
 }
