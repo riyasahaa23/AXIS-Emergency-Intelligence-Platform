@@ -1,0 +1,18 @@
+from fastapi import APIRouter, HTTPException, Request
+
+from app.incident.state import IncidentNotFoundError
+from app.models.incident import Incident
+
+router = APIRouter(prefix="/api/incidents", tags=["analysis"])
+
+
+@router.post("/{incident_id}/analysis")
+async def analyse_incident(incident_id: str, request: Request) -> dict:
+    try:
+        incident: Incident = request.app.state.incident_manager.store.get(incident_id)
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Incident not found") from exc
+    risk = request.app.state.risk_engine.assess(incident)
+    impact = request.app.state.impact_engine.assess(incident)
+    verification = request.app.state.validator(risk.score)
+    return {"incident": incident, "risk": risk, "impact": impact, "verification": verification}

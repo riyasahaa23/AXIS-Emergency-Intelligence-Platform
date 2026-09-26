@@ -1,0 +1,11 @@
+{
+  "name": "@axis/analyser",
+  "private": true,
+  "scripts": {
+    "dev": "python scripts/dev.py",
+    "build": "python -m compileall app",
+    "test": "python scripts/tool.py pytest",
+    "lint": "python scripts/tool.py ruff check app tests",
+    "typecheck": "python scripts/tool.py mypy app"
+  }
+}

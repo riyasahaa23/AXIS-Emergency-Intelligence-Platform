@@ -10,7 +10,8 @@
       "dependsOn": ["^build"],
       "outputs": [
         "dist/**",
-        ".svelte-kit/**"
+        ".svelte-kit/**",
+        "**/__pycache__/**"
       ]
     },
 

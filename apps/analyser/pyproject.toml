@@ -1,0 +1,57 @@
+[project]
+name = "axis-analyser"
+version = "0.1.0"
+description = "AXIS planetary emergency analysis engine"
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2",
+    "pydantic-settings"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "ruff",
+    "mypy"
+]
+
+database = [
+    "sqlalchemy>=2",
+    "asyncpg",
+    "geoalchemy2",
+    "pgvector",
+    "alembic"
+]
+
+events = [
+    "redis>=5"
+]
+
+ai = [
+    "pydantic-ai",
+    "ollama"
+]
+
+geo = [
+    "geopandas",
+    "shapely",
+    "pyproj"
+]
+
+graph = [
+    "networkx"
+]
+
+optimization = [
+    "ortools"
+]
+
+voice = [
+    "faster-whisper",
+    "piper-tts"
+]
