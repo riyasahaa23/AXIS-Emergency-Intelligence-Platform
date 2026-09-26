@@ -1,0 +1,16 @@
+{
+  "name": "jarvis",
+  "version": "0.1.0",
+  "description": "JARVIS intelligent emergency analysis platform",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}
