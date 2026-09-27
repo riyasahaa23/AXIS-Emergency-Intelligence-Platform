@@ -1,4 +1,4 @@
-from app.core.events import DomainEvent, InMemoryEventPublisher
+from app.core.events import DomainEvent, EventPublisher, publish_event
 from app.incident.state import InMemoryIncidentStore
 from app.models.incident import Incident, IncidentCreate, IncidentUpdate
 
@@ -10,7 +10,7 @@ async def _await_if_needed(value):
 
 
 class IncidentManager:
-    def __init__(self, store: InMemoryIncidentStore, events: InMemoryEventPublisher) -> None:
+    def __init__(self, store: InMemoryIncidentStore, events: EventPublisher) -> None:
         self.store = store
         self.events = events
 
@@ -23,7 +23,7 @@ class IncidentManager:
             payload=incident.model_dump(mode="json"),
         )
         await self._record(event)
-        self.events.publish(event)
+        await publish_event(self.events, event)
         return incident
 
     async def update(self, incident_id: str, data: IncidentUpdate) -> Incident:
@@ -35,7 +35,7 @@ class IncidentManager:
             payload={"changes": data.model_dump(exclude_unset=True, exclude={"expected_version"})},
         )
         await self._record(event)
-        self.events.publish(event)
+        await publish_event(self.events, event)
         return incident
 
     async def _record(self, event: DomainEvent) -> None:

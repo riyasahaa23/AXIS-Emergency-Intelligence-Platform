@@ -2,7 +2,6 @@
 
 from alembic import op
 
-
 revision = "0009_incident_event_sourcing"
 down_revision = "0008_india_hospitals"
 branch_labels = None

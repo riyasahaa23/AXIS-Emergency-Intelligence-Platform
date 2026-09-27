@@ -48,6 +48,7 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         self.redis = None
 
     async def dispatch(self, request: Request, call_next):
+        settings = getattr(request.app.state, "settings", self.settings)
         request_id = request.headers.get("x-request-id") or str(uuid4())
         request.state.request_id = request_id
 
@@ -59,14 +60,14 @@ class GatewayMiddleware(BaseHTTPMiddleware):
                 response.headers["retry-after"] = str(retry_after)
                 return response
 
-        public = request.url.path in {"/health", "/health/live", "/docs", "/openapi.json"} or request.url.path.startswith("/redoc")
+        public = request.url.path in {"/health", "/health/live", "/metrics", "/docs", "/openapi.json"} or request.url.path.startswith("/redoc")
         credential = _credential(request)
         context: AuthContext | None = None
-        if _match(credential or "", self.settings.api_key_admin):
+        if _match(credential or "", settings.api_key_admin):
             context = AuthContext("admin", frozenset({"*", "admin"}), "api_key")
-        elif _match(credential or "", self.settings.api_key_readonly):
+        elif _match(credential or "", settings.api_key_readonly):
             context = AuthContext("readonly", frozenset({"read"}), "api_key")
-        elif _match(credential or "", self.settings.api_key_operator):
+        elif _match(credential or "", settings.api_key_operator):
             context = AuthContext("operator", frozenset({"read", "analyse", "simulate", "recommend", "ingest", "schedule", "approve"}), "api_key")
         elif credential:
             from app.audit.service import record_audit
@@ -74,14 +75,20 @@ class GatewayMiddleware(BaseHTTPMiddleware):
             response = self._denied(request_id, "AUTH_DENIED", "Invalid API credential")
             await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "invalid_credential"})
             return response
-        elif self.settings.environment == "production" and not public:
+        elif settings.environment == "production" and not public:
             from app.audit.service import record_audit
             request.state.auth = None
             response = self._denied(request_id, "AUTH_DENIED", "Authentication is required")
             await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "missing_credential"})
             return response
+        elif not public and settings.environment == "development" and settings.allow_anonymous_demo:
+            context = AuthContext("anonymous-development", frozenset({"read", "analyse", "simulate", "ingest", "schedule", "recommend"}), "anonymous")
         elif not public:
-            context = AuthContext("anonymous-development", frozenset({"read", "analyse", "simulate", "ingest", "schedule"}), "anonymous")
+            from app.audit.service import record_audit
+            request.state.auth = None
+            response = self._denied(request_id, "AUTH_DENIED", "Authentication is required")
+            await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "missing_credential"})
+            return response
 
         request.state.auth = context
         response = await call_next(request)

@@ -13,6 +13,7 @@ dependencies = [
     "redis>=8.1.0",
     "sqlalchemy>=2.1.1",
     "asyncpg>=0.31.0",
+    "alembic>=1.13",
     "pandas>=3.0.6",
     "ecmwf-opendata>=0.3.34",
 ]
@@ -23,6 +24,11 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["app*", "migrations*"]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -39,7 +45,6 @@ database = [
     "asyncpg",
     "geoalchemy2",
     "pgvector",
-    "alembic"
 ]
 
 events = [

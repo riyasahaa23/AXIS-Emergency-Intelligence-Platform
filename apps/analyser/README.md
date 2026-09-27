@@ -49,6 +49,10 @@ python scripts/migrate.py
 release step rather than changing the schema during application startup.
 Alembic is authoritative; `app/db/schema.sql` is kept as a bootstrap reference.
 
+Production must set `AXIS_ALLOW_IN_MEMORY_FALLBACK=false`; database and Redis
+startup failures then fail the process instead of silently degrading to local
+in-memory state.
+
 Run migrations after every fresh deployment:
 
 ```bash

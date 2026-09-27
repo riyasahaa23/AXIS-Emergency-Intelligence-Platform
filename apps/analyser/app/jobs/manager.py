@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from app.core.events import DomainEvent
+from app.core.events import DomainEvent, publish_event
 
 
 class AnalysisJob(BaseModel):
@@ -77,8 +77,16 @@ class AnalysisJobManager:
             await self.queue.put(job.id)
         return job
 
-    def get(self, job_id: str) -> AnalysisJob | None:
-        return self.jobs.get(job_id)
+    async def get(self, job_id: str) -> AnalysisJob | None:
+        job = self.jobs.get(job_id)
+        if job is not None:
+            return job
+        if self.repository is not None:
+            job = await self.repository.get(job_id)
+            if job is not None:
+                self.jobs[job.id] = job
+            return job
+        return None
 
     async def _worker(self) -> None:
         self.stopping = False
@@ -185,6 +193,4 @@ class AnalysisJobManager:
             aggregate_id=job.id,
             payload={"status": job.status, "progress": job.progress, "stage": job.current_stage},
         )
-        self.application.state.events.publish(event)
-        if self.redis_queue is not None:
-            await self.redis_queue.publish_event(event.model_dump_json())
+        await publish_event(self.application.state.events, event)

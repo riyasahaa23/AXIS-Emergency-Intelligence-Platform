@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     api_key_operator: str = ""
     api_key_admin: str = ""
     allow_anonymous_demo: bool = True
+    allow_in_memory_fallback: bool = True
     auto_migrate: bool = False
     scheduler_poll_seconds: int = 5
     rate_limit_per_minute: int = 120
@@ -75,3 +76,5 @@ def validate_runtime_settings(settings: Settings) -> None:
         (settings.api_key_readonly, settings.api_key_operator, settings.api_key_admin)
     ):
         raise RuntimeError("Production requires AXIS_API_KEY_READONLY, AXIS_API_KEY_OPERATOR or AXIS_API_KEY_ADMIN")
+    if settings.environment == "production" and settings.allow_in_memory_fallback:
+        raise RuntimeError("Production must disable AXIS_ALLOW_IN_MEMORY_FALLBACK")

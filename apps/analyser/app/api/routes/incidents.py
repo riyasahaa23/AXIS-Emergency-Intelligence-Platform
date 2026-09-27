@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from app.auth.dependencies import require_scope
 from app.core.events import DomainEvent
 from app.incident.state import IncidentNotFoundError, IncidentVersionConflictError
 from app.models.incident import Incident, IncidentCreate, IncidentUpdate
@@ -12,18 +13,18 @@ def manager(request: Request):
     return request.app.state.incident_manager
 
 
-@router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("analyse"))])
 async def create_incident(payload: IncidentCreate, request: Request) -> Incident:
     return await manager(request).create(payload)
 
 
-@router.get("", response_model=list[Incident])
+@router.get("", response_model=list[Incident], dependencies=[Depends(require_scope("read"))])
 async def list_incidents(request: Request) -> list[Incident]:
     result = manager(request).store.list()
     return await result if hasattr(result, "__await__") else result
 
 
-@router.get("/{incident_id}", response_model=Incident)
+@router.get("/{incident_id}", response_model=Incident, dependencies=[Depends(require_scope("read"))])
 async def get_incident(incident_id: str, request: Request) -> Incident:
     try:
         result = manager(request).store.get(incident_id)
@@ -32,7 +33,7 @@ async def get_incident(incident_id: str, request: Request) -> Incident:
         raise HTTPException(status_code=404, detail="Incident not found") from exc
 
 
-@router.patch("/{incident_id}", response_model=Incident)
+@router.patch("/{incident_id}", response_model=Incident, dependencies=[Depends(require_scope("analyse"))])
 async def update_incident(incident_id: str, payload: IncidentUpdate, request: Request) -> Incident:
     try:
         return await manager(request).update(incident_id, payload)
@@ -42,7 +43,7 @@ async def update_incident(incident_id: str, payload: IncidentUpdate, request: Re
         raise HTTPException(status_code=404, detail="Incident not found") from exc
 
 
-@router.get("/{incident_id}/timeline", response_model=list[DomainEvent])
+@router.get("/{incident_id}/timeline", response_model=list[DomainEvent], dependencies=[Depends(require_scope("read"))])
 async def incident_timeline(incident_id: str, request: Request) -> list[DomainEvent]:
     try:
         result = manager(request).store.timeline(incident_id)
@@ -51,7 +52,7 @@ async def incident_timeline(incident_id: str, request: Request) -> list[DomainEv
         raise HTTPException(status_code=404, detail="Incident not found") from exc
 
 
-@router.get("/{incident_id}/evidence", response_model=list[dict])
+@router.get("/{incident_id}/evidence", response_model=list[dict], dependencies=[Depends(require_scope("read"))])
 async def incident_evidence(incident_id: str, request: Request) -> list[dict]:
     try:
         result = manager(request).store.evidence(incident_id)
@@ -60,7 +61,7 @@ async def incident_evidence(incident_id: str, request: Request) -> list[dict]:
         raise HTTPException(status_code=404, detail="Incident not found") from exc
 
 
-@router.get("/{incident_id}/decision-timeline")
+@router.get("/{incident_id}/decision-timeline", dependencies=[Depends(require_scope("read"))])
 async def decision_timeline(incident_id: str, request: Request) -> list[dict]:
     try:
         result = manager(request).store.timeline(incident_id)

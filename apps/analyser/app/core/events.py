@@ -1,5 +1,6 @@
 from asyncio import Queue
 from datetime import UTC, datetime
+from inspect import isawaitable
 from typing import Any, Protocol
 from uuid import uuid4
 
@@ -16,8 +17,15 @@ class DomainEvent(BaseModel):
 
 
 class EventPublisher(Protocol):
-    def publish(self, event: DomainEvent) -> DomainEvent:
+    def publish(self, event: DomainEvent) -> Any:
         ...
+
+
+async def publish_event(publisher: EventPublisher, event: DomainEvent) -> DomainEvent:
+    result = publisher.publish(event)
+    if isawaitable(result):
+        await result
+    return event
 
 
 class InMemoryEventPublisher:
@@ -46,17 +54,17 @@ class RedisStreamPublisher:
 
     def __init__(self, redis_url: str, stream: str = "axis.events") -> None:
         try:
-            from redis import Redis
+            from redis.asyncio import Redis
         except ImportError as exc:
             raise RuntimeError("Install the 'events' extra to use Redis Streams") from exc
         self.client = Redis.from_url(redis_url, decode_responses=True)
         self.stream = stream
         self.subscribers: list[Queue[DomainEvent]] = []
 
-    def publish(self, event: DomainEvent) -> DomainEvent:
+    async def publish(self, event: DomainEvent) -> DomainEvent:
         for subscriber in list(self.subscribers):
             subscriber.put_nowait(event)
-        self.client.xadd(self.stream, {"event": event.model_dump_json()})
+        await self.client.xadd(self.stream, {"event": event.model_dump_json()})
         return event
 
     def subscribe(self) -> Queue[DomainEvent]:
@@ -68,5 +76,5 @@ class RedisStreamPublisher:
         if subscriber in self.subscribers:
             self.subscribers.remove(subscriber)
 
-    def close(self) -> None:
-        self.client.close()
+    async def close(self) -> None:
+        await self.client.aclose()

@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
+from inspect import isawaitable
 
+import httpx
 from fastapi import FastAPI
 
 from app.api import websocket
@@ -16,6 +18,8 @@ from app.api.routes import (
 from app.auth.gateway import install_gateway
 from app.core.config import get_settings, validate_runtime_settings
 from app.core.events import InMemoryEventPublisher
+from app.core.logging import configure_logging
+from app.core.metrics import Metrics, instrument_request
 from app.core.rate_limit import SlidingWindowRateLimiter
 from app.db.database import create_async_engine, dispose_engine
 from app.db.repositories import PostgresIncidentRepository
@@ -40,8 +44,15 @@ from app.verification.validator import validate_score
 async def lifespan(application: FastAPI):
     settings = get_settings()
     validate_runtime_settings(settings)
+    configure_logging(settings.log_level)
     application.state.settings = settings
     application.state.websocket_limiter = SlidingWindowRateLimiter(settings.websocket_rate_limit_per_minute)
+    http_client = httpx.AsyncClient(
+        timeout=httpx.Timeout(60.0, connect=10.0),
+        follow_redirects=True,
+        limits=httpx.Limits(max_connections=50, max_keepalive_connections=20),
+    )
+    application.state.http_client = http_client
     database_engine = create_async_engine(settings.database_url)
     if database_engine is not None:
         try:
@@ -52,9 +63,12 @@ async def lifespan(application: FastAPI):
 
                 async with database_engine.connect() as connection:
                     await connection.execute(text("SELECT 1"))
-        except Exception:  # noqa: BLE001 - local mode intentionally degrades without PostgreSQL
+        except Exception:
             # Local development and tests can run without PostgreSQL. The
             # repository falls back to the in-memory incident store below.
+            if settings.environment == "production" or not settings.allow_in_memory_fallback:
+                await dispose_engine(database_engine)
+                raise
             await dispose_engine(database_engine)
             database_engine = None
     application.state.database_engine = database_engine
@@ -64,8 +78,10 @@ async def lifespan(application: FastAPI):
             from app.core.events import RedisStreamPublisher
 
             events = RedisStreamPublisher(settings.redis_url)
-            events.client.ping()
-        except Exception:  # noqa: BLE001 - local mode intentionally degrades without Redis
+            await events.client.ping()
+        except Exception:
+            if settings.environment == "production" or not settings.allow_in_memory_fallback:
+                raise
             events = InMemoryEventPublisher()
     application.state.events = events
     application.state.audit_events = []
@@ -78,7 +94,7 @@ async def lifespan(application: FastAPI):
     application.state.response_planner = ResponsePlanner()
     application.state.validator = validate_score
     application.state.satellite_service = SatelliteService()
-    application.state.source_client = SourceClient(database_engine)
+    application.state.source_client = SourceClient(database_engine, http_client=http_client)
     if settings.object_storage_backend == "s3":
         application.state.source_client.object_store = S3ObjectStore(
             settings.object_storage_bucket, settings.object_storage_endpoint,
@@ -119,7 +135,10 @@ async def lifespan(application: FastAPI):
     await application.state.jobs.stop()
     close_events = getattr(events, "close", None)
     if close_events is not None:
-        close_events()
+        result = close_events()
+        if isawaitable(result):
+            await result
+    await http_client.aclose()
     await dispose_engine(database_engine)
 
 
@@ -128,6 +147,18 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.state.metrics = Metrics()
+
+
+@app.middleware("http")
+async def request_metrics(request, call_next):
+    response = await instrument_request(request, call_next, request.app.state.metrics)
+    response.headers.setdefault("x-content-type-options", "nosniff")
+    response.headers.setdefault("x-frame-options", "DENY")
+    response.headers.setdefault("referrer-policy", "no-referrer")
+    response.headers.setdefault("permissions-policy", "camera=(), microphone=(), geolocation=()")
+    return response
 
 install_gateway(app, get_settings())
 

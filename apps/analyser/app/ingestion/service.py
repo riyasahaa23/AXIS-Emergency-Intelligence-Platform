@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from app.core.events import DomainEvent
+from app.core.events import DomainEvent, publish_event
 
 from .client import SourceClient
 from .models import IngestionRequest, IngestionResult
@@ -160,4 +160,4 @@ class IngestionService:
             event_type="INGESTION_RUN_UPDATED", aggregate_id=run_id,
             payload={"source": source_id, "status": status, "stored_count": stored_count, "error": error},
         )
-        self.events.publish(event)
+        await publish_event(self.events, event)

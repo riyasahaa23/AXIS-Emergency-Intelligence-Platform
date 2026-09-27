@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.auth.dependencies import require_scope
 from app.tools.satellite.models import (
     FireSearchRequest,
     SatelliteLayerRequest,
@@ -13,7 +14,7 @@ def service(request: Request):
     return request.app.state.satellite_service
 
 
-@router.post("/search")
+@router.post("/search", dependencies=[Depends(require_scope("read"))])
 async def search_satellite(payload: SatelliteSearchRequest, request: Request):
     try:
         return await service(request).search(payload)
@@ -21,7 +22,7 @@ async def search_satellite(payload: SatelliteSearchRequest, request: Request):
         raise HTTPException(status_code=502, detail=f"Copernicus request failed: {exc}") from exc
 
 
-@router.post("/fires")
+@router.post("/fires", dependencies=[Depends(require_scope("read"))])
 async def search_fires(payload: FireSearchRequest, request: Request):
     try:
         return {"source": "NASA FIRMS", "detections": await service(request).fires(payload)}
@@ -29,7 +30,7 @@ async def search_fires(payload: FireSearchRequest, request: Request):
         raise HTTPException(status_code=502, detail=f"NASA FIRMS request failed: {exc}") from exc
 
 
-@router.post("/bhuvan/layer")
+@router.post("/bhuvan/layer", dependencies=[Depends(require_scope("read"))])
 async def bhuvan_layer(payload: SatelliteLayerRequest, request: Request):
     try:
         return {"source": "ISRO Bhuvan", "url": service(request).layer_url(payload)}

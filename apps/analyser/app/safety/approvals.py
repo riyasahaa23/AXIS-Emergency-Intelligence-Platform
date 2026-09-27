@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from app.core.events import DomainEvent
+from app.core.events import DomainEvent, publish_event
 
 
 class ApprovalCreate(BaseModel):
@@ -40,7 +40,7 @@ async def record_approval(request, incident_id: str, payload: ApprovalCreate) ->
                 VALUES (:incident_id, :plan_id, :actor, :status, :rationale, :created_at)"""), record.model_dump(mode="python"))
     events = getattr(request.app.state, "events", None)
     if events is not None:
-        events.publish(DomainEvent(
+        await publish_event(events, DomainEvent(
             event_type="APPROVAL_RECORDED",
             aggregate_id=incident_id,
             payload=record.model_dump(mode="json"),

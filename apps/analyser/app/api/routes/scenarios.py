@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.auth.dependencies import require_scope
 from app.incident.state import IncidentNotFoundError
 from app.models.scenario import ScenarioComparison, ScenarioRequest
 
 router = APIRouter(prefix="/api/incidents", tags=["scenarios"])
 
 
-@router.post("/{incident_id}/scenarios", response_model=ScenarioComparison)
+@router.post("/{incident_id}/scenarios", response_model=ScenarioComparison, dependencies=[Depends(require_scope("simulate"))])
 async def compare_scenario(incident_id: str, payload: ScenarioRequest, request: Request) -> ScenarioComparison:
     try:
         result = request.app.state.incident_manager.store.get(incident_id)

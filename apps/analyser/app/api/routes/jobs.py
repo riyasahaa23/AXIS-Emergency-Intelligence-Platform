@@ -1,9 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.audit.service import record_audit
+from app.auth.dependencies import require_scope
 
 
 class AnalysisJobRequest(BaseModel):
@@ -15,7 +16,7 @@ class AnalysisJobRequest(BaseModel):
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
 
-@router.post("/analysis", status_code=202)
+@router.post("/analysis", status_code=202, dependencies=[Depends(require_scope("analyse"))])
 async def create_analysis_job(payload: AnalysisJobRequest, request: Request):
     incident = request.app.state.incident_manager.store.get(payload.incident_id)
     if hasattr(incident, "__await__"):
@@ -30,17 +31,17 @@ async def create_analysis_job(payload: AnalysisJobRequest, request: Request):
     return job
 
 
-@router.get("/{job_id}")
+@router.get("/{job_id}", dependencies=[Depends(require_scope("read"))])
 async def get_job(job_id: str, request: Request):
-    job = request.app.state.jobs.get(job_id)
+    job = await request.app.state.jobs.get(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
 
-@router.get("/{job_id}/result")
+@router.get("/{job_id}/result", dependencies=[Depends(require_scope("read"))])
 async def get_job_result(job_id: str, request: Request):
-    job = request.app.state.jobs.get(job_id)
+    job = await request.app.state.jobs.get(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     if job.status != "completed":

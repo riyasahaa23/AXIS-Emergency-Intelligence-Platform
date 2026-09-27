@@ -263,6 +263,7 @@ name = "axis-analyser"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "alembic" },
     { name = "asyncpg" },
     { name = "ecmwf-opendata" },
     { name = "fastapi" },
@@ -281,7 +282,6 @@ ai = [
     { name = "pydantic-ai" },
 ]
 database = [
-    { name = "alembic" },
     { name = "asyncpg" },
     { name = "geoalchemy2" },
     { name = "greenlet" },
@@ -317,9 +317,14 @@ voice = [
     { name = "piper-tts" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "httpx2" },
+]
+
 [package.metadata]
 requires-dist = [
-    { name = "alembic", marker = "extra == 'database'" },
+    { name = "alembic", specifier = ">=1.13" },
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "asyncpg", marker = "extra == 'database'" },
     { name = "boto3", marker = "extra == 'storage'", specifier = ">=1.34" },
@@ -353,6 +358,9 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"] },
 ]
 provides-extras = ["dev", "database", "events", "storage", "ai", "geo", "graph", "optimization", "voice"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "httpx2", specifier = ">=2.13.1" }]
 
 [[package]]
 name = "beartype"

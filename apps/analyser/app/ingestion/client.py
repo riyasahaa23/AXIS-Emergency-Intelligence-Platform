@@ -18,8 +18,9 @@ class SourceNotConfigured(RuntimeError):
 class SourceClient:
     """Conservative JSON ingestion client for public API/feed sources."""
 
-    def __init__(self, database_engine=None) -> None:
+    def __init__(self, database_engine=None, http_client: httpx.AsyncClient | None = None) -> None:
         self.database_engine = database_engine
+        self.http_client = http_client
         self.firms_map_key = ""
         self.firms_source = "VIIRS_NOAA20_NRT"
         self.firms_days = 1
@@ -48,56 +49,56 @@ class SourceClient:
         if source_id == "usgs_earthquakes":
             from .providers.usgs import USGSAdapter
 
-            return await USGSAdapter(source.endpoint or "", self.database_engine).fetch(request)
+            return await USGSAdapter(source.endpoint or "", self.database_engine, client=self.http_client).fetch(request)
         if source_id == "gdacs":
             from .providers.gdacs import GDACSAdapter
 
-            return await GDACSAdapter(source.endpoint or "", self.database_engine).fetch(request)
+            return await GDACSAdapter(source.endpoint or "", self.database_engine, client=self.http_client).fetch(request)
         if source_id == "firms":
             from .providers.firms import FIRMSAdapter
 
-            return await FIRMSAdapter(self.firms_map_key, self.firms_source, self.firms_days, self.database_engine).fetch(request)
+            return await FIRMSAdapter(self.firms_map_key, self.firms_source, self.firms_days, self.database_engine, client=self.http_client).fetch(request)
         if source_id == "ecmwf":
             from .providers.ecmwf import ECMWFAdapter
 
-            return await ECMWFAdapter(self.ecmwf_base_url, self.object_storage_dir, self.database_engine, object_store=self.object_store).fetch(request)
+            return await ECMWFAdapter(self.ecmwf_base_url, self.object_storage_dir, self.database_engine, client=self.http_client, object_store=self.object_store).fetch(request)
         if source_id == "bhuvan_lulc":
             from .providers.bhuvan import BhuvanAdapter
 
             return await BhuvanAdapter(
                 self.bhuvan_api_url, self.bhuvan_api_token, self.bhuvan_wms_url,
-                self.bhuvan_wmts_url, self.database_engine,
+                self.bhuvan_wmts_url, self.database_engine, client=self.http_client,
             ).fetch(request)
         if source_id == "india_hospitals":
             from .providers.india_hospitals import IndiaHospitalAdapter
 
             return await IndiaHospitalAdapter(
                 self.india_hospitals_api_key, self.india_hospitals_resource_id,
-                self.india_hospitals_api_url, self.database_engine,
+                self.india_hospitals_api_url, self.database_engine, client=self.http_client,
             ).fetch(request)
         if source_id == "gpm_imerg":
             from .providers.imerg import IMERGAdapter
 
             return await IMERGAdapter(
                 self.imerg_archive_url, self.imerg_access_token,
-                self.imerg_storage_dir, self.database_engine, object_store=self.object_store,
+                self.imerg_storage_dir, self.database_engine, client=self.http_client, object_store=self.object_store,
             ).fetch(request)
         if source_id == "ibtracs":
             from .providers.ibtracs import IBTrACSAdapter
 
-            return await IBTrACSAdapter(self.ibtracs_base_url, self.database_engine).fetch(request)
+            return await IBTrACSAdapter(self.ibtracs_base_url, self.database_engine, client=self.http_client).fetch(request)
         if source_id == "ghcnh":
             from .providers.ghcnh import GHCNhAdapter
 
-            return await GHCNhAdapter(self.ghcnh_base_url, self.database_engine).fetch(request)
+            return await GHCNhAdapter(self.ghcnh_base_url, self.database_engine, client=self.http_client).fetch(request)
         if source_id == "copernicus_ems":
             from .providers.copernicus_ems import CopernicusEMSAdapter
 
-            return await CopernicusEMSAdapter(self.copernicus_ems_url, self.database_engine).fetch(request)
+            return await CopernicusEMSAdapter(self.copernicus_ems_url, self.database_engine, client=self.http_client).fetch(request)
         if source_id == "copernicus_land_cover":
             from .providers.copernicus_land_cover import CopernicusLandCoverAdapter
 
-            return await CopernicusLandCoverAdapter(self.copernicus_land_cover_stac_url, self.database_engine).fetch(request)
+            return await CopernicusLandCoverAdapter(self.copernicus_land_cover_stac_url, self.database_engine, client=self.http_client).fetch(request)
         if source.kind == "dataset" or source.endpoint is None:
             return IngestionResult(source=source_id, fetched_at=datetime.now(UTC), stored_count=0, payload={"catalog_url": source.endpoint, "message": "Dataset source registered; use its official download/catalog workflow."})
         params: dict[str, Any] = {**request.params}
@@ -117,11 +118,21 @@ class SourceClient:
             query = params.pop("data", request.query)
             if not query:
                 raise ValueError("OSM Overpass requires params.data or query")
-            async with httpx.AsyncClient(timeout=60) as client:
+            client = self.http_client or httpx.AsyncClient(timeout=60, follow_redirects=True)
+            owned_client = self.http_client is None
+            try:
                 response = await client.post(source.endpoint, data={"data": query})
+            finally:
+                if owned_client:
+                    await client.aclose()
         else:
-            async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+            client = self.http_client or httpx.AsyncClient(timeout=60, follow_redirects=True)
+            owned_client = self.http_client is None
+            try:
                 response = await client.get(source.endpoint, params=params)
+            finally:
+                if owned_client:
+                    await client.aclose()
         response.raise_for_status()
         payload: Any
         try:
@@ -144,11 +155,16 @@ class SourceClient:
         if source.endpoint is None:
             return {"source": source_id, "status": "catalog_only", "endpoint": None}
         try:
-            async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
-                response = await client.head(source.endpoint)
+            client = self.http_client or httpx.AsyncClient(timeout=10, follow_redirects=True)
+            owned_client = self.http_client is None
+            try:
+                response = await client.head(source.endpoint, timeout=10)
                 if response.status_code in {405, 403}:
-                    response = await client.get(source.endpoint, params={"limit": 1})
+                    response = await client.get(source.endpoint, params={"limit": 1}, timeout=10)
                 response.raise_for_status()
+            finally:
+                if owned_client:
+                    await client.aclose()
             return {"source": source_id, "status": "healthy", "http_status": response.status_code}
         except Exception as exc:  # noqa: BLE001 - health endpoint reports provider state
             return {"source": source_id, "status": "unavailable", "error": str(exc)}
@@ -163,17 +179,19 @@ class SourceClient:
             records = payload["data"]
         if not records:
             records = [payload]
+        values = []
+        for record in records:
+            encoded = json.dumps(record, default=str)
+            external_id = record.get("id") if isinstance(record, dict) else None
+            if external_id is None:
+                external_id = hashlib.sha256(encoded.encode()).hexdigest()
+            values.append({"source": source_id, "external_id": str(external_id), "payload": encoded})
         async with self.database_engine.begin() as connection:
-            for record in records:
-                encoded = json.dumps(record, default=str)
-                external_id = record.get("id") if isinstance(record, dict) else None
-                if external_id is None:
-                    external_id = hashlib.sha256(encoded.encode()).hexdigest()
-                await connection.execute(
-                    text("""INSERT INTO external_observations (source, external_id, payload)
+            await connection.execute(
+                text("""INSERT INTO external_observations (source, external_id, payload)
                         VALUES (:source, :external_id, CAST(:payload AS JSONB))
                         ON CONFLICT (source, external_id) DO UPDATE SET payload = EXCLUDED.payload,
                         observed_at = now()"""),
-                    {"source": source_id, "external_id": str(external_id), "payload": encoded},
-                )
+                values,
+            )
         return len(records)

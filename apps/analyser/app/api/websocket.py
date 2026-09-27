@@ -19,6 +19,9 @@ async def events_socket(websocket: WebSocket) -> None:
     if settings.environment == "production" and not valid:
         await websocket.close(code=1008, reason="Authentication required")
         return
+    if settings.environment == "development" and not settings.allow_anonymous_demo and not valid:
+        await websocket.close(code=1008, reason="Authentication required")
+        return
     limiter = getattr(websocket.app.state, "websocket_limiter", None)
     if limiter is not None:
         identity = websocket.client.host if websocket.client else "unknown"

@@ -10,11 +10,21 @@ services:
     volumes:
       - axis-postgres:/var/lib/postgresql/data
       - ./apps/analyser/app/db/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U axis -d axis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: docker.io/library/redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   axis-postgres:

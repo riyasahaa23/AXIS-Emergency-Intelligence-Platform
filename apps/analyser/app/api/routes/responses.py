@@ -10,7 +10,7 @@ from app.safety.approvals import ApprovalCreate, record_approval
 router = APIRouter(prefix="/api/incidents", tags=["responses"])
 
 
-@router.post("/{incident_id}/responses", response_model=ResponsePlan)
+@router.post("/{incident_id}/responses", response_model=ResponsePlan, dependencies=[Depends(require_scope("recommend"))])
 async def plan_response(incident_id: str, request: Request, payload: ResourceRequest | None = None) -> ResponsePlan:
     try:
         result = request.app.state.incident_manager.store.get(incident_id)
@@ -35,7 +35,7 @@ async def approve_response(incident_id: str, payload: ApprovalCreate, request: R
     return approval
 
 
-@router.get("/{incident_id}/approvals")
+@router.get("/{incident_id}/approvals", dependencies=[Depends(require_scope("read"))])
 async def list_approvals(incident_id: str, request: Request):
     try:
         result = request.app.state.incident_manager.store.get(incident_id)

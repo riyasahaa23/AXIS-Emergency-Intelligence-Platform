@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.audit.service import record_audit
@@ -10,24 +12,28 @@ from app.ingestion.scheduler import IngestionScheduleCreate
 router = APIRouter(prefix="/api/data", tags=["data-ingestion"])
 
 
-@router.get("/sources")
+@router.get("/sources", dependencies=[Depends(require_scope("read"))])
 async def list_sources():
     return list(SOURCE_REGISTRY.values())
 
 
-@router.get("/health")
+@router.get("/health", dependencies=[Depends(require_scope("read"))])
 async def source_health(request: Request, source_id: str | None = None):
     source_ids = [source_id] if source_id else list(SOURCE_REGISTRY)
-    results = []
-    for item in source_ids:
-        try:
-            results.append(await request.app.state.source_client.health(item))
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail=f"Unknown data source: {exc.args[0]}") from exc
+    semaphore = asyncio.Semaphore(8)
+
+    async def check(item):
+        async with semaphore:
+            return await request.app.state.source_client.health(item)
+
+    try:
+        results = await asyncio.gather(*(check(item) for item in source_ids))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Unknown data source: {exc.args[0]}") from exc
     return {"sources": results}
 
 
-@router.get("/runs/{run_id}")
+@router.get("/runs/{run_id}", dependencies=[Depends(require_scope("read"))])
 async def get_ingestion_run(run_id: str, request: Request):
     try:
         return await request.app.state.ingestion_service.status(run_id)
@@ -35,7 +41,7 @@ async def get_ingestion_run(run_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Ingestion run not found") from exc
 
 
-@router.get("/schedules")
+@router.get("/schedules", dependencies=[Depends(require_scope("read"))])
 async def list_ingestion_schedules(request: Request):
     return await request.app.state.ingestion_scheduler.list()
 
