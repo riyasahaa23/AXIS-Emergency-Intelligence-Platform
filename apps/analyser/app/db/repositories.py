@@ -15,13 +15,14 @@ class AnalysisJobRepository:
     async def create(self, job) -> None:
         from sqlalchemy import text
 
-        values = job.model_dump(mode="json")
+        values = job.model_dump(mode="python")
         async with self.engine.begin() as connection:
             await connection.execute(
                 text("""INSERT INTO analysis_jobs
-                    (id, incident_id, status, progress, current_stage, request, created_at, updated_at)
-                    VALUES (:id, :incident_id, :status, :progress, :current_stage,
-                            CAST(:request AS JSONB), :created_at, :updated_at)
+                    (id, incident_id, status, progress, current_stage, attempts,
+                     idempotency_key, request, created_at, updated_at)
+                    VALUES (:id, :incident_id, :status, :progress, :current_stage, :attempts,
+                            :idempotency_key, CAST(:request AS JSONB), :created_at, :updated_at)
                     ON CONFLICT (id) DO NOTHING"""),
                 {**values, "request": json.dumps(values["request"])},
             )
@@ -29,12 +30,12 @@ class AnalysisJobRepository:
     async def update(self, job) -> None:
         from sqlalchemy import text
 
-        values = job.model_dump(mode="json")
+        values = job.model_dump(mode="python")
         async with self.engine.begin() as connection:
             await connection.execute(
                 text("""UPDATE analysis_jobs
                     SET status=:status, progress=:progress, current_stage=:current_stage,
-                        error=:error, updated_at=:updated_at
+                        attempts=:attempts, error=:error, updated_at=:updated_at
                     WHERE id=:id"""),
                 values,
             )
@@ -45,6 +46,41 @@ class AnalysisJobRepository:
                         ON CONFLICT (job_id) DO UPDATE SET result=EXCLUDED.result"""),
                     {"job_id": job.id, "result": json.dumps(job.result), "created_at": job.updated_at},
                 )
+
+    @staticmethod
+    def _job(row, result=None):
+        from app.jobs.manager import AnalysisJob
+
+        values = dict(row)
+        values["request"] = values.get("request") or {}
+        values["result"] = result
+        return AnalysisJob.model_validate(values)
+
+    async def get(self, job_id: str):
+        from sqlalchemy import text
+
+        async with self.engine.connect() as connection:
+            result = await connection.execute(
+                text("""SELECT j.*, r.result
+                    FROM analysis_jobs j LEFT JOIN analysis_results r ON r.job_id = j.id
+                    WHERE j.id = :id"""),
+                {"id": job_id},
+            )
+            row = result.mappings().first()
+        return None if row is None else self._job(row, row.get("result"))
+
+    async def get_by_idempotency_key(self, key: str):
+        from sqlalchemy import text
+
+        async with self.engine.connect() as connection:
+            result = await connection.execute(
+                text("""SELECT j.*, r.result
+                    FROM analysis_jobs j LEFT JOIN analysis_results r ON r.job_id = j.id
+                    WHERE j.idempotency_key = :key"""),
+                {"key": key},
+            )
+            row = result.mappings().first()
+        return None if row is None else self._job(row, row.get("result"))
 
 
 class IncidentRepository(Protocol):

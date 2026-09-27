@@ -56,7 +56,19 @@ async def lifespan(application: FastAPI):
     application.state.validator = validate_score
     application.state.satellite_service = SatelliteService()
     application.state.source_client = SourceClient(database_engine)
-    application.state.jobs = AnalysisJobManager(application, database_engine)
+    application.state.source_client.firms_map_key = settings.firms_map_key
+    application.state.source_client.firms_source = settings.firms_source
+    application.state.source_client.firms_days = settings.firms_days
+    application.state.source_client.ecmwf_base_url = settings.ecmwf_data_url
+    application.state.source_client.object_storage_dir = settings.object_storage_dir
+    application.state.source_client.bhuvan_api_url = settings.bhuvan_api_url
+    application.state.source_client.bhuvan_api_token = settings.bhuvan_api_token
+    application.state.source_client.bhuvan_wms_url = settings.bhuvan_wms_url
+    application.state.source_client.bhuvan_wmts_url = settings.bhuvan_wmts_url
+    application.state.source_client.india_hospitals_api_url = settings.india_hospitals_api_url
+    application.state.source_client.india_hospitals_api_key = settings.india_hospitals_api_key
+    application.state.source_client.india_hospitals_resource_id = settings.india_hospitals_resource_id
+    application.state.jobs = AnalysisJobManager(application, database_engine, settings.redis_url)
     await application.state.jobs.start()
     yield
     await application.state.jobs.stop()

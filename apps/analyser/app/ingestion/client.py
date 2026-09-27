@@ -18,11 +18,53 @@ class SourceClient:
 
     def __init__(self, database_engine=None) -> None:
         self.database_engine = database_engine
+        self.firms_map_key = ""
+        self.firms_source = "VIIRS_NOAA20_NRT"
+        self.firms_days = 1
+        self.ecmwf_base_url = "https://data.ecmwf.int"
+        self.object_storage_dir = "data/object-store"
+        self.bhuvan_api_url = "https://bhuvan-app1.nrsc.gov.in/api/"
+        self.bhuvan_api_token = ""
+        self.bhuvan_wms_url = ""
+        self.bhuvan_wmts_url = ""
+        self.india_hospitals_api_url = "https://api.data.gov.in/resource"
+        self.india_hospitals_api_key = ""
+        self.india_hospitals_resource_id = ""
 
     async def fetch(self, source_id: str, request: IngestionRequest) -> IngestionResult:
         source = SOURCE_REGISTRY.get(source_id)
         if source is None:
             raise KeyError(source_id)
+        if source_id == "usgs_earthquakes":
+            from .providers.usgs import USGSAdapter
+
+            return await USGSAdapter(source.endpoint or "", self.database_engine).fetch(request)
+        if source_id == "gdacs":
+            from .providers.gdacs import GDACSAdapter
+
+            return await GDACSAdapter(source.endpoint or "", self.database_engine).fetch(request)
+        if source_id == "firms":
+            from .providers.firms import FIRMSAdapter
+
+            return await FIRMSAdapter(self.firms_map_key, self.firms_source, self.firms_days, self.database_engine).fetch(request)
+        if source_id == "ecmwf":
+            from .providers.ecmwf import ECMWFAdapter
+
+            return await ECMWFAdapter(self.ecmwf_base_url, self.object_storage_dir, self.database_engine).fetch(request)
+        if source_id == "bhuvan_lulc":
+            from .providers.bhuvan import BhuvanAdapter
+
+            return await BhuvanAdapter(
+                self.bhuvan_api_url, self.bhuvan_api_token, self.bhuvan_wms_url,
+                self.bhuvan_wmts_url, self.database_engine,
+            ).fetch(request)
+        if source_id == "india_hospitals":
+            from .providers.india_hospitals import IndiaHospitalAdapter
+
+            return await IndiaHospitalAdapter(
+                self.india_hospitals_api_key, self.india_hospitals_resource_id,
+                self.india_hospitals_api_url, self.database_engine,
+            ).fetch(request)
         if source.kind == "dataset" or source.endpoint is None:
             return IngestionResult(source=source_id, fetched_at=datetime.now(UTC), stored_count=0, payload={"catalog_url": source.endpoint, "message": "Dataset source registered; use its official download/catalog workflow."})
         params: dict[str, Any] = {**request.params}
