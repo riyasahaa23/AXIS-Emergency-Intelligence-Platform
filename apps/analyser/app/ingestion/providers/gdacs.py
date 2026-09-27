@@ -35,7 +35,7 @@ class GDACSAdapter:
     def normalize(payload: dict[str, Any]) -> list[GDACSEvent]:
         features = payload.get("features", []) if payload.get("type") == "FeatureCollection" else []
         if not isinstance(features, list):
-            raise ValueError("GDACS response does not contain a GeoJSON feature list")
+            raise TypeError("GDACS response does not contain a GeoJSON feature list")
         events: list[GDACSEvent] = []
         for feature in features:
             properties = feature.get("properties") or {}

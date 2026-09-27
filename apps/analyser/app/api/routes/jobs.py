@@ -3,6 +3,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from app.audit.service import record_audit
+
 
 class AnalysisJobRequest(BaseModel):
     incident_id: str
@@ -23,7 +25,9 @@ async def create_analysis_job(payload: AnalysisJobRequest, request: Request):
             raise HTTPException(status_code=404, detail="Incident not found") from exc
     elif incident is None:
         raise HTTPException(status_code=404, detail="Incident not found")
-    return await request.app.state.jobs.submit(payload.incident_id, payload.options, payload.idempotency_key)
+    job = await request.app.state.jobs.submit(payload.incident_id, payload.options, payload.idempotency_key)
+    await record_audit(request, "ANALYSIS_JOB_CREATE", "success", "analysis_job", job.id, {"incident_id": payload.incident_id})
+    return job
 
 
 @router.get("/{job_id}")

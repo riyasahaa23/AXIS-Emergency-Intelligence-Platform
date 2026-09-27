@@ -3,25 +3,37 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api import websocket
-from app.api.routes import analysis, health, incidents, jobs, responses, scenarios, satellite
+from app.api.routes import (
+    analysis,
+    data,
+    health,
+    incidents,
+    jobs,
+    responses,
+    satellite,
+    scenarios,
+)
+from app.auth.gateway import install_gateway
+from app.core.config import get_settings, validate_runtime_settings
 from app.core.events import InMemoryEventPublisher
-from app.incident.manager import IncidentManager
-from app.incident.state import InMemoryIncidentStore
-from app.intelligence.impact.engine import ImpactEngine
-from app.intelligence.risk.engine import RiskEngine
-from app.response.planner import ResponsePlanner
-from app.scenarios.engine import ScenarioEngine
-from app.verification.validator import validate_score
-from app.tools.satellite.service import SatelliteService
-from app.core.config import get_settings
+from app.core.rate_limit import SlidingWindowRateLimiter
 from app.db.database import create_async_engine, dispose_engine
 from app.db.repositories import PostgresIncidentRepository
 from app.db.schema import initialize_schema
+from app.incident.manager import IncidentManager
+from app.incident.state import InMemoryIncidentStore
 from app.ingestion.client import SourceClient
-from app.api.routes import data
+from app.ingestion.scheduler import IngestionScheduler
+from app.ingestion.service import IngestionService
+from app.ingestion.worker import IngestionWorker
+from app.intelligence.impact.engine import ImpactEngine
+from app.intelligence.risk.engine import RiskEngine
 from app.jobs.manager import AnalysisJobManager
-from app.auth.gateway import install_gateway
-from app.core.config import validate_runtime_settings
+from app.response.planner import ResponsePlanner
+from app.scenarios.engine import ScenarioEngine
+from app.storage.object_store import LocalObjectStore, S3ObjectStore
+from app.tools.satellite.service import SatelliteService
+from app.verification.validator import validate_score
 
 
 @asynccontextmanager
@@ -29,6 +41,7 @@ async def lifespan(application: FastAPI):
     settings = get_settings()
     validate_runtime_settings(settings)
     application.state.settings = settings
+    application.state.websocket_limiter = SlidingWindowRateLimiter(settings.websocket_rate_limit_per_minute)
     database_engine = create_async_engine(settings.database_url)
     if database_engine is not None:
         try:
@@ -39,14 +52,24 @@ async def lifespan(application: FastAPI):
 
                 async with database_engine.connect() as connection:
                     await connection.execute(text("SELECT 1"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - local mode intentionally degrades without PostgreSQL
             # Local development and tests can run without PostgreSQL. The
             # repository falls back to the in-memory incident store below.
             await dispose_engine(database_engine)
             database_engine = None
     application.state.database_engine = database_engine
     events = InMemoryEventPublisher()
+    if settings.redis_url:
+        try:
+            from app.core.events import RedisStreamPublisher
+
+            events = RedisStreamPublisher(settings.redis_url)
+            events.client.ping()
+        except Exception:  # noqa: BLE001 - local mode intentionally degrades without Redis
+            events = InMemoryEventPublisher()
     application.state.events = events
+    application.state.audit_events = []
+    application.state.approvals = []
     incident_store = PostgresIncidentRepository(database_engine) if database_engine is not None else InMemoryIncidentStore()
     application.state.incident_manager = IncidentManager(incident_store, events)
     application.state.risk_engine = RiskEngine()
@@ -56,6 +79,14 @@ async def lifespan(application: FastAPI):
     application.state.validator = validate_score
     application.state.satellite_service = SatelliteService()
     application.state.source_client = SourceClient(database_engine)
+    if settings.object_storage_backend == "s3":
+        application.state.source_client.object_store = S3ObjectStore(
+            settings.object_storage_bucket, settings.object_storage_endpoint,
+            settings.object_storage_region, settings.object_storage_access_key,
+            settings.object_storage_secret_key,
+        )
+    else:
+        application.state.source_client.object_store = LocalObjectStore(settings.object_storage_dir)
     application.state.source_client.firms_map_key = settings.firms_map_key
     application.state.source_client.firms_source = settings.firms_source
     application.state.source_client.firms_days = settings.firms_days
@@ -68,10 +99,27 @@ async def lifespan(application: FastAPI):
     application.state.source_client.india_hospitals_api_url = settings.india_hospitals_api_url
     application.state.source_client.india_hospitals_api_key = settings.india_hospitals_api_key
     application.state.source_client.india_hospitals_resource_id = settings.india_hospitals_resource_id
+    application.state.source_client.imerg_archive_url = settings.imerg_archive_url
+    application.state.source_client.imerg_access_token = settings.imerg_access_token
+    application.state.source_client.imerg_storage_dir = settings.object_storage_dir
+    application.state.source_client.ibtracs_base_url = settings.ibtracs_base_url
+    application.state.source_client.ghcnh_base_url = settings.ghcnh_base_url
+    application.state.source_client.copernicus_ems_url = settings.copernicus_ems_url
+    application.state.source_client.copernicus_land_cover_stac_url = settings.copernicus_land_cover_stac_url
+    application.state.ingestion_service = IngestionService(application.state.source_client, database_engine, events)
+    application.state.ingestion_worker = IngestionWorker(application.state.ingestion_service, settings.redis_url)
+    await application.state.ingestion_worker.start()
+    application.state.ingestion_scheduler = IngestionScheduler(application.state.ingestion_worker, database_engine, settings.scheduler_poll_seconds)
+    await application.state.ingestion_scheduler.start()
     application.state.jobs = AnalysisJobManager(application, database_engine, settings.redis_url)
     await application.state.jobs.start()
     yield
+    await application.state.ingestion_scheduler.stop()
+    await application.state.ingestion_worker.stop()
     await application.state.jobs.stop()
+    close_events = getattr(events, "close", None)
+    if close_events is not None:
+        close_events()
     await dispose_engine(database_engine)
 
 

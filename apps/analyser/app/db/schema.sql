@@ -21,8 +21,12 @@ CREATE TABLE IF NOT EXISTS ingestion_runs (
     fetched_count INTEGER NOT NULL DEFAULT 0,
     stored_count INTEGER NOT NULL DEFAULT 0,
     error TEXT,
+    idempotency_key TEXT,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS ingestion_runs_idempotency_idx
+    ON ingestion_runs(source_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS ingestion_runs_source_idx
     ON ingestion_runs(source_id, requested_at DESC);
@@ -183,6 +187,171 @@ CREATE TABLE IF NOT EXISTS hospitals (
 
 CREATE INDEX IF NOT EXISTS hospitals_geom_idx ON hospitals USING GIST (geom);
 CREATE INDEX IF NOT EXISTS hospitals_state_district_idx ON hospitals(state, district);
+
+CREATE TABLE IF NOT EXISTS precipitation_assets (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    product_id TEXT NOT NULL,
+    source_url TEXT NOT NULL,
+    object_uri TEXT NOT NULL,
+    checksum_sha256 TEXT NOT NULL,
+    byte_size BIGINT NOT NULL CHECK (byte_size >= 0),
+    content_type TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, checksum_sha256)
+);
+
+CREATE TABLE IF NOT EXISTS precipitation_observations (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    external_id TEXT NOT NULL,
+    observed_at TIMESTAMPTZ NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+    precipitation_mm DOUBLE PRECISION NOT NULL,
+    product_id TEXT NOT NULL,
+    geom GEOGRAPHY(POINT, 4326) NOT NULL,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS precipitation_observations_geom_idx ON precipitation_observations USING GIST (geom);
+CREATE INDEX IF NOT EXISTS precipitation_observations_time_idx ON precipitation_observations(observed_at DESC);
+
+CREATE TABLE IF NOT EXISTS tropical_cyclones (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    storm_id TEXT NOT NULL,
+    season INTEGER,
+    basin TEXT,
+    name TEXT,
+    point_count INTEGER NOT NULL CHECK (point_count >= 0),
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, storm_id)
+);
+
+CREATE TABLE IF NOT EXISTS tropical_cyclone_points (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    storm_id TEXT NOT NULL,
+    observed_at TIMESTAMPTZ NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+    basin TEXT,
+    nature TEXT,
+    wind_kt DOUBLE PRECISION,
+    pressure_mb DOUBLE PRECISION,
+    geom GEOGRAPHY(POINT, 4326) NOT NULL,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, storm_id, observed_at)
+);
+
+CREATE INDEX IF NOT EXISTS tropical_cyclone_points_geom_idx ON tropical_cyclone_points USING GIST (geom);
+CREATE INDEX IF NOT EXISTS tropical_cyclone_points_time_idx ON tropical_cyclone_points(observed_at DESC);
+
+CREATE TABLE IF NOT EXISTS hourly_weather_observations (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    station_id TEXT NOT NULL,
+    observed_at TIMESTAMPTZ NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+    elevation_m DOUBLE PRECISION,
+    temperature_c DOUBLE PRECISION,
+    dew_point_c DOUBLE PRECISION,
+    precipitation_mm DOUBLE PRECISION,
+    wind_speed_mps DOUBLE PRECISION,
+    wind_direction_deg DOUBLE PRECISION CHECK (wind_direction_deg BETWEEN 0 AND 360),
+    relative_humidity_pct DOUBLE PRECISION CHECK (relative_humidity_pct BETWEEN 0 AND 100),
+    quality JSONB NOT NULL DEFAULT '{}'::jsonb,
+    geom GEOGRAPHY(POINT, 4326) NOT NULL,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, station_id, observed_at)
+);
+
+CREATE INDEX IF NOT EXISTS hourly_weather_observations_geom_idx ON hourly_weather_observations USING GIST (geom);
+CREATE INDEX IF NOT EXISTS hourly_weather_observations_time_idx ON hourly_weather_observations(observed_at DESC);
+CREATE INDEX IF NOT EXISTS hourly_weather_observations_station_idx ON hourly_weather_observations(station_id, observed_at DESC);
+
+CREATE TABLE IF NOT EXISTS copernicus_ems_activations (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    code TEXT NOT NULL,
+    countries JSONB NOT NULL DEFAULT '[]'::jsonb,
+    event_time TIMESTAMPTZ,
+    name TEXT NOT NULL,
+    centroid_latitude DOUBLE PRECISION CHECK (centroid_latitude BETWEEN -90 AND 90),
+    centroid_longitude DOUBLE PRECISION CHECK (centroid_longitude BETWEEN -180 AND 180),
+    activation_time TIMESTAMPTZ,
+    category TEXT,
+    last_update TIMESTAMPTZ,
+    closed BOOLEAN NOT NULL DEFAULT FALSE,
+    gdacs_id TEXT,
+    area_of_interest_count INTEGER NOT NULL DEFAULT 0 CHECK (area_of_interest_count >= 0),
+    product_count INTEGER NOT NULL DEFAULT 0 CHECK (product_count >= 0),
+    geom GEOGRAPHY(POINT, 4326),
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, code)
+);
+
+CREATE INDEX IF NOT EXISTS copernicus_ems_activations_geom_idx ON copernicus_ems_activations USING GIST (geom);
+CREATE INDEX IF NOT EXISTS copernicus_ems_activations_event_idx ON copernicus_ems_activations(event_time DESC);
+
+CREATE TABLE IF NOT EXISTS land_cover_products (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    product_id TEXT NOT NULL,
+    collection_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    temporal_extent TEXT NOT NULL,
+    spatial_extent TEXT NOT NULL DEFAULT 'global',
+    access_methods JSONB NOT NULL DEFAULT '[]'::jsonb,
+    product_url TEXT NOT NULL,
+    s3_path TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, product_id)
+);
+
+CREATE TABLE IF NOT EXISTS land_cover_assets (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    collection_id TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    observed_at TIMESTAMPTZ,
+    bbox DOUBLE PRECISION[],
+    assets JSONB NOT NULL DEFAULT '{}'::jsonb,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, collection_id, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS land_cover_assets_observed_idx ON land_cover_assets(observed_at DESC);
+
+CREATE TABLE IF NOT EXISTS ingestion_schedules (
+    id TEXT PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    interval_seconds INTEGER NOT NULL CHECK (interval_seconds BETWEEN 60 AND 31536000),
+    params JSONB NOT NULL DEFAULT '{}'::jsonb,
+    "limit" INTEGER NOT NULL DEFAULT 25 CHECK ("limit" BETWEEN 1 AND 100),
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    next_run_at TIMESTAMPTZ NOT NULL,
+    last_run_id TEXT,
+    last_error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ingestion_schedules_due_idx ON ingestion_schedules(enabled, next_run_at);
 
 CREATE TABLE IF NOT EXISTS incident_events (
     id UUID PRIMARY KEY,

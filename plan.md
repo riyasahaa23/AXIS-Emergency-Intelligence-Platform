@@ -1,6 +1,6 @@
 # AXIS — Backend Architecture Review and Implementation Plan
 
-Status: backend foundation in progress
+Status: backend foundation implemented; operational hardening in progress
 Scope: Python/FastAPI backend, data platform, intelligence engines, workers and contracts
 Out of scope: SvelteKit/TypeScript and Dioxus/Rust client implementation
 
@@ -44,7 +44,15 @@ Scores reflect the repository as inspected, not the intended architecture.
 | DevOps Practices | 4/10 | Docker Compose exists and compilation/tests run. There is no migration command, CI quality gate, image hardening, health/readiness split, structured logs, metrics, backup policy or deployment manifest. |
 | User Experience | 5.5/10 | The planned job status, WebSocket and explainable results are good. UX cannot be dependable until stale data, partial provider failure, confidence, approval state and actionable error codes are returned consistently. |
 
-### Overall score: 4.9/10
+### Updated implementation status
+
+The backend now includes authenticated API routes, audit events, durable
+Alembic migrations through `0016_ingestion_idempotency`, provider adapters,
+queued ingestion, schedules, approval records, decision timelines, Redis event
+publishing, request rate limiting, idempotent ingestion keys and an
+S3-compatible object-storage seam. It remains an MVP backend until PostgreSQL,
+Redis, live provider checks, deployment and frontend integration are exercised
+in a real environment.
 
 ### Maturity: Prototype, approaching structured MVP
 

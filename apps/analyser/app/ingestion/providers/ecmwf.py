@@ -3,13 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 import httpx
 from pydantic import BaseModel, Field
 
 from app.ingestion.models import IngestionRequest, IngestionResult
+from app.storage.object_store import LocalObjectStore, ObjectStore
 
 
 class ECMWFForecastAsset(BaseModel):
@@ -31,9 +31,9 @@ class ECMWFForecastAsset(BaseModel):
 class ECMWFAdapter:
     source_id = "ecmwf"
 
-    def __init__(self, base_url: str, storage_dir: str = "data/object-store", database_engine=None, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(self, base_url: str, storage_dir: str = "data/object-store", database_engine=None, client: httpx.AsyncClient | None = None, object_store: ObjectStore | None = None) -> None:
         self.base_url = base_url.rstrip("/")
-        self.storage_dir = Path(storage_dir)
+        self.object_store = object_store or LocalObjectStore(storage_dir)
         self.database_engine = database_engine
         self.client = client
 
@@ -80,13 +80,11 @@ class ECMWFAdapter:
         self.validate_grib2(content)
         checksum = hashlib.sha256(content).hexdigest()
         forecast_id = f"{values['date']}{values['time']:02d}-{values['step']}h-{values['stream']}-{values['type']}"
-        target = self.storage_dir / "ecmwf" / f"{forecast_id}.grib2"
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(content)
+        object_uri = await self.object_store.put(f"ecmwf/{forecast_id}.grib2", content)
         asset = ECMWFForecastAsset(
             forecast_id=forecast_id, run_date=values["date"], run_time=values["time"], step_hours=values["step"],
             stream=values["stream"], product_type=values["type"], model=values["model"], resolution=values["resolution"],
-            parameters=values["params"], object_uri=str(target), checksum_sha256=checksum,
+            parameters=values["params"], object_uri=object_uri, checksum_sha256=checksum,
             byte_size=len(content), content_type="application/octet-stream",
         )
         stored_count = await self.store(asset)

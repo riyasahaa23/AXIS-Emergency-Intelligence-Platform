@@ -149,8 +149,9 @@ class BhuvanAdapter:
     async def store_statistics(self, endpoint: str, payload: Any) -> int:
         if self.database_engine is None:
             return 0
-        from sqlalchemy import text
         import json
+
+        from sqlalchemy import text
 
         async with self.database_engine.begin() as connection:
             await connection.execute(text("""INSERT INTO external_observations (source, external_id, payload)

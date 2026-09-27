@@ -21,6 +21,7 @@ class IngestionRequest(BaseModel):
     start: datetime | None = None
     end: datetime | None = None
     limit: int = Field(default=25, ge=1, le=100)
+    idempotency_key: str | None = Field(default=None, max_length=200)
 
 
 class IngestionResult(BaseModel):

@@ -51,7 +51,22 @@ class RedisStreamPublisher:
             raise RuntimeError("Install the 'events' extra to use Redis Streams") from exc
         self.client = Redis.from_url(redis_url, decode_responses=True)
         self.stream = stream
+        self.subscribers: list[Queue[DomainEvent]] = []
 
     def publish(self, event: DomainEvent) -> DomainEvent:
+        for subscriber in list(self.subscribers):
+            subscriber.put_nowait(event)
         self.client.xadd(self.stream, {"event": event.model_dump_json()})
         return event
+
+    def subscribe(self) -> Queue[DomainEvent]:
+        subscriber: Queue[DomainEvent] = Queue()
+        self.subscribers.append(subscriber)
+        return subscriber
+
+    def unsubscribe(self, subscriber: Queue[DomainEvent]) -> None:
+        if subscriber in self.subscribers:
+            self.subscribers.remove(subscriber)
+
+    def close(self) -> None:
+        self.client.close()

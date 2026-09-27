@@ -1,5 +1,5 @@
-from datetime import UTC, datetime
 import json
+from datetime import UTC, datetime
 from typing import Protocol
 
 from app.models.incident import Incident, IncidentCreate, IncidentStatus, IncidentUpdate
@@ -186,6 +186,7 @@ class PostgresIncidentRepository:
 
     async def timeline(self, incident_id: str) -> list:
         from sqlalchemy import text
+
         from app.core.events import DomainEvent
 
         await self.get(incident_id)
@@ -194,7 +195,12 @@ class PostgresIncidentRepository:
                 text("SELECT * FROM incident_events WHERE aggregate_id = :id ORDER BY version"),
                 {"id": incident_id},
             )
-            return [DomainEvent.model_validate(row) for row in result.mappings().all()]
+            events = []
+            for row in result.mappings().all():
+                values = dict(row)
+                values["id"] = str(values["id"])
+                events.append(DomainEvent.model_validate(values))
+            return events
 
     async def evidence(self, incident_id: str) -> list[dict]:
         events = await self.timeline(incident_id)

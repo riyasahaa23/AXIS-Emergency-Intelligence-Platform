@@ -1,5 +1,5 @@
-from app.models.incident import IncidentCreate, IncidentUpdate
 from app.incident.state import IncidentVersionConflictError, InMemoryIncidentStore
+from app.models.incident import IncidentCreate, IncidentUpdate
 
 
 def test_incident_replay_matches_live_state():

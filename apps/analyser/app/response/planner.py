@@ -1,8 +1,8 @@
 from app.models.incident import Incident
-from app.models.response import ResponsePlan
 from app.models.resource import Resource, ResourceAllocation
-from app.optimization.allocation import allocate
+from app.models.response import ResponsePlan
 from app.models.risk import RiskAssessment
+from app.optimization.allocation import allocate
 
 
 class ResponsePlanner:

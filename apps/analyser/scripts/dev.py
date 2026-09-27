@@ -27,6 +27,9 @@ def find_port(host: str, requested_port: int, explicit: bool) -> int:
 
 def main() -> None:
     project_root = Path(__file__).resolve().parents[1]
+    # ``app`` is a package inside apps/analyser, so make imports work even
+    # when this script is launched from the monorepo root.
+    os.chdir(project_root)
     venv_python = project_root / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     python = venv_python if venv_python.exists() else Path(sys.executable)
     host = os.environ.get("AXIS_HOST", "127.0.0.1")

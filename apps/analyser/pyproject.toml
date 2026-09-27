@@ -41,6 +41,10 @@ events = [
     "redis>=5"
 ]
 
+storage = [
+    "boto3>=1.34"
+]
+
 ai = [
     "pydantic-ai",
     "ollama"

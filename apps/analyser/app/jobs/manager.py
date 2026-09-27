@@ -38,6 +38,7 @@ class AnalysisJobManager:
         self.jobs: dict[str, AnalysisJob] = {}
         self.queue: asyncio.Queue[str] = asyncio.Queue()
         self.worker_task: asyncio.Task[None] | None = None
+        self.stopping = False
 
     async def start(self) -> None:
         if self.redis_url:
@@ -47,14 +48,18 @@ class AnalysisJobManager:
                 candidate = RedisJobQueue(self.redis_url, consumer=f"axis-worker-{uuid4().hex[:8]}")
                 await candidate.connect()
                 self.redis_queue = candidate
-            except Exception:
+            except Exception:  # noqa: BLE001 - Redis is optional in local mode
                 self.redis_queue = None
         self.worker_task = asyncio.create_task(self._worker())
 
     async def stop(self) -> None:
+        self.stopping = True
         if self.worker_task is not None:
-            self.worker_task.cancel()
-            await asyncio.gather(self.worker_task, return_exceptions=True)
+            try:
+                await asyncio.wait_for(self.worker_task, timeout=30)
+            except TimeoutError:
+                self.worker_task.cancel()
+                await asyncio.gather(self.worker_task, return_exceptions=True)
         if self.redis_queue is not None:
             await self.redis_queue.close()
 
@@ -76,7 +81,8 @@ class AnalysisJobManager:
         return self.jobs.get(job_id)
 
     async def _worker(self) -> None:
-        while True:
+        self.stopping = False
+        while not self.stopping:
             if self.redis_queue is not None:
                 messages = await self.redis_queue.recover_pending()
                 messages.extend(await self.redis_queue.consume())
@@ -91,17 +97,20 @@ class AnalysisJobManager:
                         continue
                     try:
                         await self._run(job)
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001 - failed jobs are retried
                         await self._handle_failure(job, str(exc))
                     finally:
                         await self.redis_queue.acknowledge(message.stream_id)
                 continue
 
-            job_id = await self.queue.get()
+            try:
+                job_id = await asyncio.wait_for(self.queue.get(), timeout=1)
+            except TimeoutError:
+                continue
             job = self.jobs[job_id]
             try:
                 await self._run(job)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - failed jobs are retried
                 await self._handle_failure(job, str(exc))
             finally:
                 self.queue.task_done()

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from app.core.events import DomainEvent
 from app.incident.state import IncidentNotFoundError, IncidentVersionConflictError
 from app.models.incident import Incident, IncidentCreate, IncidentUpdate
+from app.safety.approvals import ApprovalRecord
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
@@ -57,3 +58,34 @@ async def incident_evidence(incident_id: str, request: Request) -> list[dict]:
         return await result if hasattr(result, "__await__") else result
     except IncidentNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Incident not found") from exc
+
+
+@router.get("/{incident_id}/decision-timeline")
+async def decision_timeline(incident_id: str, request: Request) -> list[dict]:
+    try:
+        result = manager(request).store.timeline(incident_id)
+        events = await result if hasattr(result, "__await__") else result
+        incident = manager(request).store.get(incident_id)
+        await incident if hasattr(incident, "__await__") else None
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Incident not found") from exc
+
+    if request.app.state.database_engine is None:
+        approvals = [item for item in request.app.state.approvals if item.incident_id == incident_id]
+    else:
+        from sqlalchemy import text
+
+        async with request.app.state.database_engine.connect() as connection:
+            rows = (await connection.execute(text("SELECT * FROM approvals WHERE incident_id=:incident_id ORDER BY created_at"), {"incident_id": incident_id})).mappings().all()
+        approvals = []
+        for row in rows:
+            values = dict(row)
+            values["id"] = f"approval_{values['id']}"
+            approvals.append(ApprovalRecord.model_validate(values))
+
+    timeline = [
+        {"type": event.event_type, "occurred_at": event.occurred_at, "payload": event.payload}
+        for event in events
+    ]
+    timeline.extend({"type": "APPROVAL_RECORDED", "occurred_at": approval.created_at, "payload": approval.model_dump(mode="json")} for approval in approvals)
+    return sorted(timeline, key=lambda item: item["occurred_at"])

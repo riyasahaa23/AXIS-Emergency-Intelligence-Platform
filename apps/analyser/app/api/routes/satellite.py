@@ -1,6 +1,10 @@
 from fastapi import APIRouter, HTTPException, Request
 
-from app.tools.satellite.models import FireSearchRequest, SatelliteLayerRequest, SatelliteSearchRequest
+from app.tools.satellite.models import (
+    FireSearchRequest,
+    SatelliteLayerRequest,
+    SatelliteSearchRequest,
+)
 
 router = APIRouter(prefix="/api/satellite", tags=["satellite"])
 

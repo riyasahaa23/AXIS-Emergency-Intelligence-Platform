@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import hashlib
 import secrets
+import time
 from dataclasses import dataclass
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from app.core.rate_limit import SlidingWindowRateLimiter
 
 
 @dataclass(frozen=True)
@@ -40,10 +44,20 @@ class GatewayMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, settings) -> None:
         super().__init__(app)
         self.settings = settings
+        self.limiter = SlidingWindowRateLimiter(settings.rate_limit_per_minute)
+        self.redis = None
 
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("x-request-id") or str(uuid4())
         request.state.request_id = request_id
+
+        if request.url.path.startswith("/api/"):
+            identity = request.client.host if request.client else "unknown"
+            allowed, retry_after = await self._allow(identity)
+            if not allowed:
+                response = self._denied(request_id, "RATE_LIMITED", "Request rate limit exceeded", 429)
+                response.headers["retry-after"] = str(retry_after)
+                return response
 
         public = request.url.path in {"/health", "/health/live", "/docs", "/openapi.json"} or request.url.path.startswith("/redoc")
         credential = _credential(request)
@@ -53,23 +67,50 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         elif _match(credential or "", self.settings.api_key_readonly):
             context = AuthContext("readonly", frozenset({"read"}), "api_key")
         elif _match(credential or "", self.settings.api_key_operator):
-            context = AuthContext("operator", frozenset({"read", "analyse", "simulate", "recommend"}), "api_key")
+            context = AuthContext("operator", frozenset({"read", "analyse", "simulate", "recommend", "ingest", "schedule", "approve"}), "api_key")
         elif credential:
-            return self._denied(request_id, "AUTH_DENIED", "Invalid API credential")
+            from app.audit.service import record_audit
+            request.state.auth = AuthContext("unknown", frozenset(), "invalid")
+            response = self._denied(request_id, "AUTH_DENIED", "Invalid API credential")
+            await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "invalid_credential"})
+            return response
         elif self.settings.environment == "production" and not public:
-            return self._denied(request_id, "AUTH_DENIED", "Authentication is required")
+            from app.audit.service import record_audit
+            request.state.auth = None
+            response = self._denied(request_id, "AUTH_DENIED", "Authentication is required")
+            await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "missing_credential"})
+            return response
         elif not public:
-            context = AuthContext("anonymous-development", frozenset({"read", "analyse", "simulate"}), "anonymous")
+            context = AuthContext("anonymous-development", frozenset({"read", "analyse", "simulate", "ingest", "schedule"}), "anonymous")
 
         request.state.auth = context
         response = await call_next(request)
         response.headers["x-request-id"] = request_id
         return response
 
+    async def _allow(self, identity: str) -> tuple[bool, int]:
+        if self.settings.redis_url:
+            try:
+                if self.redis is None:
+                    from redis.asyncio import Redis
+
+                    self.redis = Redis.from_url(self.settings.redis_url, decode_responses=True)
+                bucket = int(time.time() // 60)
+                key = f"axis:rate:{hashlib.sha256(identity.encode()).hexdigest()}:{bucket}"
+                count = await self.redis.incr(key)
+                if count == 1:
+                    await self.redis.expire(key, 60)
+                if count > self.settings.rate_limit_per_minute:
+                    return False, 60 - (int(time.time()) % 60)
+                return True, 0
+            except Exception:  # noqa: BLE001 - local limiter is the safe fallback
+                return self.limiter.allow(identity)
+        return self.limiter.allow(identity)
+
     @staticmethod
-    def _denied(request_id: str, code: str, message: str) -> JSONResponse:
+    def _denied(request_id: str, code: str, message: str, status_code: int = 401) -> JSONResponse:
         return JSONResponse(
-            status_code=401,
+            status_code=status_code,
             content={"error": {"code": code, "message": message, "request_id": request_id}},
             headers={"x-request-id": request_id},
         )

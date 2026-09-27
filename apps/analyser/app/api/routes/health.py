@@ -23,7 +23,13 @@ async def readiness(request: Request):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"status": "not_ready", "database": "unavailable"},
         )
+    llm_status = "disabled"
+    if settings.llm_provider == "ollama":
+        llm_status = "configured" if settings.ollama_base_url and settings.ollama_model else "misconfigured"
     return {
         "status": "ok" if database_ready else "degraded",
         "database": "ready" if database_ready else "in_memory_fallback",
+        "llm": llm_status,
+        "events": "redis" if settings.redis_url else "in_memory",
+        "object_storage": settings.object_storage_backend,
     }
