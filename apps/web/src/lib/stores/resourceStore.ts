@@ -927,12 +927,12 @@ export function applyOptimizationRecommendation(item: {
 }
 
 // Helper to record audit events
-function addResourceAudit(action: string, severity: 'info' | 'success' | 'warning' | 'critical' = 'info') {
+export function addResourceAudit(action: string, severity: 'info' | 'success' | 'warning' | 'critical' = 'info') {
   const now = new Date();
   const timeStr = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')} UTC`;
   resourceAuditLog.update((logs) => [
     {
-      id: `log-${Date.now()}`,
+      id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       timestamp: timeStr,
       action,
       target: 'Resource Logistics Center',

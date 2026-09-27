@@ -253,7 +253,8 @@ export const currentReplayState = derived(
   }
 );
 
-// Actions
+let eventCounter = 0;
+
 export function recordHistoryEvent(
   category: HistoryEventCategory,
   action: string,
@@ -266,7 +267,7 @@ export function recordHistoryEvent(
   const timeStr = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}:${now.getUTCSeconds().toString().padStart(2, '0')} UTC`;
 
   const newEvent: HistoryAuditEvent = {
-    id: `evt-${Date.now()}`,
+    id: `evt-${Date.now()}-${++eventCounter}-${Math.random().toString(36).slice(2, 6)}`,
     timestamp: timeStr,
     category,
     actor,

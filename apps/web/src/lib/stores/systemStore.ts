@@ -17,6 +17,40 @@ export const isIncidentTelemetryCollapsed = writable<boolean>(false);
 export const isAlertsDrawerOpen = writable<boolean>(false);
 export const isSettingsModalOpen = writable<boolean>(false);
 
+// Global Incident Action Modals
+export const isIncidentAnalyzeModalOpen = writable<boolean>(false);
+export const isIncidentSimulateModalOpen = writable<boolean>(false);
+export const isIncidentPlanModalOpen = writable<boolean>(false);
+export const isUploadDataModalOpen = writable<boolean>(false);
+
+export function openIncidentAnalyzeModal() {
+  isIncidentAnalyzeModalOpen.set(true);
+}
+export function closeIncidentAnalyzeModal() {
+  isIncidentAnalyzeModalOpen.set(false);
+}
+
+export function openIncidentSimulateModal() {
+  isIncidentSimulateModalOpen.set(true);
+}
+export function closeIncidentSimulateModal() {
+  isIncidentSimulateModalOpen.set(false);
+}
+
+export function openIncidentPlanModal() {
+  isIncidentPlanModalOpen.set(true);
+}
+export function closeIncidentPlanModal() {
+  isIncidentPlanModalOpen.set(false);
+}
+
+export function openUploadDataModal() {
+  isUploadDataModalOpen.set(true);
+}
+export function closeUploadDataModal() {
+  isUploadDataModalOpen.set(false);
+}
+
 export function openScenarioDrawer() {
   isScenarioDrawerOpen.set(true);
 }

@@ -19,6 +19,10 @@
   import ResourcesView from '$components/resources/ResourcesView.svelte';
   import CommunicationsView from '$components/communications/CommunicationsView.svelte';
   import HistoryView from '$components/history/HistoryView.svelte';
+  import IncidentAnalyzeModal from '$components/incidents/modals/IncidentAnalyzeModal.svelte';
+  import IncidentSimulateModal from '$components/incidents/modals/IncidentSimulateModal.svelte';
+  import IncidentPlanModal from '$components/incidents/modals/IncidentPlanModal.svelte';
+  import UploadDataModal from '$components/command/UploadDataModal.svelte';
   import { selectedIncident } from '$stores/incidentStore';
   import { isJarvisCentralActive } from '$stores/commandStore';
   import { activeNavSection } from '$stores/systemStore';
@@ -119,6 +123,12 @@
 
       <!-- Central JARVIS Mode Transformation Overlay -->
       <JarvisCentralOverlay />
+
+      <!-- Global Incident Workflow Modals -->
+      <IncidentAnalyzeModal />
+      <IncidentSimulateModal />
+      <IncidentPlanModal />
+      <UploadDataModal />
 
     </main>
 

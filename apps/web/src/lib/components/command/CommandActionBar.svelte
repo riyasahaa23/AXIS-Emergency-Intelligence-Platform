@@ -1,6 +1,6 @@
 <script lang="ts">
   import { openJarvisCentral, submitCommand } from '../../stores/commandStore';
-  import { openScenarioDrawer } from '../../stores/systemStore';
+  import { openScenarioDrawer, openIncidentPlanModal, openUploadDataModal } from '../../stores/systemStore';
 
   function onAskAnything() {
     openJarvisCentral('LISTENING');
@@ -39,8 +39,9 @@
 
   <!-- Upload Data Button -->
   <button
-    on:click={() => onAction('Upload telemetry dataset')}
+    on:click={openUploadDataModal}
     class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#061425]/85 hover:bg-[#061425] border border-[#00E5FF]/25 hover:border-[#00E5FF] text-white text-xs font-mono transition-all backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.4)] cursor-pointer hover:shadow-[0_0_15px_rgba(0,229,255,0.2)]"
+    title="Upload Dataset / Telemetry"
   >
     <svg class="w-3.5 h-3.5 text-[#00E5FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -50,8 +51,9 @@
 
   <!-- Plan Response Button -->
   <button
-    on:click={() => onAction('Generate multi-agency evacuation plan')}
+    on:click={openIncidentPlanModal}
     class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#061425]/85 hover:bg-[#061425] border border-[#00E5FF]/25 hover:border-[#00E5FF] text-white text-xs font-mono transition-all backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.4)] cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,255,0.2)]"
+    title="Plan Emergency Response"
   >
     <svg class="w-3.5 h-3.5 text-[#8B5CFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
