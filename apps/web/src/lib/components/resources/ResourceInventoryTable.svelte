@@ -207,6 +207,7 @@
     {:else}
       {#each filteredInventory as item (item.id)}
         <div
+          data-resource-id={item.id}
           on:click={() => selectResource(item.id)}
           on:keydown={(e) => e.key === 'Enter' && selectResource(item.id)}
           tabindex="0"

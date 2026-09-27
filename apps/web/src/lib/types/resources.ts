@@ -49,6 +49,17 @@ export interface ResourceItem {
   operator?: string;
   depot?: string;
   lastUpdated: string;
+  eta?: string;
+  range?: string;
+  beds?: number;
+  medicalStaff?: number;
+  supplies?: string;
+  currentStock?: string;
+  incoming?: string;
+  outgoing?: string;
+  occupied?: number;
+  available?: number;
+  storageCapacity?: string;
 }
 
 export interface ResourceRequest {

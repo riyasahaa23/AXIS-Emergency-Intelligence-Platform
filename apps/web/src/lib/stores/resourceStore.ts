@@ -78,12 +78,74 @@ export const upcomingResourceOperations = writable<ResourceOperationItem[]>(
   floodResourceData.operations
 );
 
-// Derived Selected Resource
+// Derived Selected Resource (Single Source of Truth, Validated against Active Context)
 export const selectedResource = derived(
-  [allResources, selectedResourceId],
-  ([$resources, $id]) => {
+  [
+    allResources,
+    selectedResourceId,
+    selectedResourceCategory,
+    activeResourceMapLayer,
+    activeResourcesMode
+  ],
+  ([$resources, $id, $cat, $mapLayer, $mode]) => {
     if (!$id) return null;
-    return $resources.find((r) => r.id === $id) || null;
+    let list = $resources;
+
+    // In non-resource modes (facilities, supply_chain, requests, personnel), resources are not visible
+    if ($mode === 'facilities' || $mode === 'supply_chain' || $mode === 'requests' || $mode === 'personnel') {
+      return null;
+    }
+
+    // Category filter (Overview)
+    if ($mode === 'overview' && $cat !== 'All Resources') {
+      list = list.filter((r) => r.category === $cat);
+    }
+
+    // Map layer filter (Overview)
+    if ($mode === 'overview') {
+      if ($mapLayer === 'HELICOPTERS') {
+        list = list.filter((r) => r.category === 'Helicopters');
+      } else if ($mapLayer === 'BOATS') {
+        list = list.filter((r) => r.category === 'Boats');
+      } else if ($mapLayer === 'VEHICLES') {
+        list = list.filter((r) => r.category === 'Ground Vehicles');
+      } else if ($mapLayer === 'SUPPLIES') {
+        list = list.filter(
+          (r) =>
+            r.category === 'Medical Supplies' ||
+            r.category === 'Food & Water' ||
+            r.category === 'Temporary Shelters' ||
+            r.category === 'Fuel & Energy'
+        );
+      } else if ($mapLayer === 'FACILITIES') {
+        return null;
+      }
+    }
+
+    // Assets subview filter
+    if ($mode === 'assets') {
+      list = list.filter(
+        (r) =>
+          r.category === 'Helicopters' ||
+          r.category === 'Boats' ||
+          r.category === 'Ground Vehicles' ||
+          r.category === 'Communication Equipment' ||
+          r.category === 'Search & Rescue Equipment'
+      );
+    }
+
+    // Supplies subview filter
+    if ($mode === 'supplies') {
+      list = list.filter(
+        (r) =>
+          r.category === 'Medical Supplies' ||
+          r.category === 'Food & Water' ||
+          r.category === 'Temporary Shelters' ||
+          r.category === 'Fuel & Energy'
+      );
+    }
+
+    return list.find((r) => r.id === $id) || null;
   }
 );
 
@@ -182,6 +244,7 @@ export const resourceMapContext = derived(
     activeShipments,
     emergencyPersonnel,
     resourceRequests,
+    selectedResource,
     selectedResourceId,
     selectedFacilityId,
     selectedShipmentId
@@ -196,6 +259,7 @@ export const resourceMapContext = derived(
     $shipments,
     $personnel,
     $requests,
+    $selectedRes,
     $selectedResId,
     $selectedFacId,
     $selectedShipId
@@ -532,7 +596,7 @@ export const resourceMapContext = derived(
       markers,
       routes,
       legend,
-      selectedResource: $selectedResId ? $resources.find((r) => r.id === $selectedResId) || null : null,
+      selectedResource: $selectedRes,
       selectedFacility: $selectedFacId ? $facilities.find((f) => f.id === $selectedFacId) || null : null,
       selectedShipment: $selectedShipId ? $shipments.find((s) => s.id === $selectedShipId) || null : null
     };
@@ -557,14 +621,10 @@ export function setResourceHazard(hazard: string) {
   emergencyPersonnel.set([...pkg.personnel]);
   upcomingResourceOperations.set([...pkg.operations]);
 
-  // Clear stale selections
-  if (pkg.resources.length > 0) {
-    selectedResourceId.set(pkg.resources[0].id);
-  } else {
-    selectedResourceId.set(null);
-  }
-  selectedFacilityId.set(pkg.facilities.length > 0 ? pkg.facilities[0].id : null);
-  selectedShipmentId.set(pkg.shipments.length > 0 ? pkg.shipments[0].id : null);
+  // Clear stale selections across hazards (Acceptance Test step 10)
+  selectedResourceId.set(null);
+  selectedFacilityId.set(null);
+  selectedShipmentId.set(null);
 
   // Focus map camera on new theatre
   resourceMapFocus.set({
@@ -577,6 +637,8 @@ export function setResourceHazard(hazard: string) {
 
 // Global subscription to incidentStore
 if (typeof window !== 'undefined') {
+  (window as any).setResourceHazard = setResourceHazard;
+  (window as any).selectResource = selectResource;
   selectedIncident.subscribe(($inc) => {
     if ($inc) {
       const typeKey = $inc.type.toLowerCase();
@@ -595,14 +657,77 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Select Category
+// Select Category (Clears selection if not matching new category)
 export function setCategory(category: ResourceCategory) {
   selectedResourceCategory.set(category);
+  const currentId = get(selectedResourceId);
+  if (currentId) {
+    const items = get(allResources);
+    const found = items.find((r) => r.id === currentId);
+    if (!found || (category !== 'All Resources' && found.category !== category)) {
+      selectedResourceId.set(null);
+    }
+  }
+}
+
+// Set Map Layer Filter (Clears selection if not matching new layer)
+export function setMapLayer(
+  layer: 'ALL RESOURCES' | 'HELICOPTERS' | 'BOATS' | 'VEHICLES' | 'SUPPLIES' | 'FACILITIES'
+) {
+  activeResourceMapLayer.set(layer);
+  const currentId = get(selectedResourceId);
+  if (currentId) {
+    const items = get(allResources);
+    const found = items.find((r) => r.id === currentId);
+    if (!found) {
+      selectedResourceId.set(null);
+    } else if (layer === 'HELICOPTERS' && found.category !== 'Helicopters') {
+      selectedResourceId.set(null);
+    } else if (layer === 'BOATS' && found.category !== 'Boats') {
+      selectedResourceId.set(null);
+    } else if (layer === 'VEHICLES' && found.category !== 'Ground Vehicles') {
+      selectedResourceId.set(null);
+    } else if (
+      layer === 'SUPPLIES' &&
+      !['Medical Supplies', 'Food & Water', 'Temporary Shelters', 'Fuel & Energy'].includes(found.category)
+    ) {
+      selectedResourceId.set(null);
+    } else if (layer === 'FACILITIES') {
+      selectedResourceId.set(null);
+    }
+  }
+}
+
+// Set Resources Mode Tab (Clears or preserves selection based on relevance)
+export function setResourcesMode(mode: ResourcesMode) {
+  activeResourcesMode.set(mode);
+  const currentId = get(selectedResourceId);
+  if (currentId) {
+    const items = get(allResources);
+    const found = items.find((r) => r.id === currentId);
+    if (!found) {
+      selectedResourceId.set(null);
+    } else if (
+      mode === 'supplies' &&
+      !['Medical Supplies', 'Food & Water', 'Temporary Shelters', 'Fuel & Energy'].includes(found.category)
+    ) {
+      selectedResourceId.set(null);
+    } else if (
+      mode === 'assets' &&
+      !['Helicopters', 'Boats', 'Ground Vehicles', 'Communication Equipment', 'Search & Rescue Equipment'].includes(found.category)
+    ) {
+      selectedResourceId.set(null);
+    } else if (mode === 'facilities' || mode === 'supply_chain' || mode === 'requests' || mode === 'personnel') {
+      selectedResourceId.set(null);
+    }
+  }
 }
 
 // Select Resource & Sync Map
 export function selectResource(resourceId: string) {
   selectedResourceId.set(resourceId);
+  selectedFacilityId.set(null);
+  selectedShipmentId.set(null);
   const items = get(allResources);
   const found = items.find((r) => r.id === resourceId);
   if (found) {
@@ -617,6 +742,8 @@ export function selectResource(resourceId: string) {
 // Select Facility & Sync Map
 export function selectFacility(facilityId: string) {
   selectedFacilityId.set(facilityId);
+  selectedResourceId.set(null);
+  selectedShipmentId.set(null);
   const facs = get(allFacilities);
   const found = facs.find((f) => f.id === facilityId);
   if (found) {
@@ -624,6 +751,23 @@ export function selectFacility(facilityId: string) {
       center: found.coords,
       zoom: 1.35,
       highlightId: facilityId
+    });
+  }
+}
+
+// Track Shipment on Map
+export function trackShipment(shipmentId: string) {
+  selectedShipmentId.set(shipmentId);
+  selectedResourceId.set(null);
+  selectedFacilityId.set(null);
+  const ships = get(activeShipments);
+  const found = ships.find((s) => s.id === shipmentId);
+  if (found && found.path && found.path.length > 0) {
+    const mid = found.path[Math.floor(found.path.length / 2)];
+    resourceMapFocus.set({
+      center: mid,
+      zoom: 1.35,
+      highlightId: shipmentId
     });
   }
 }
@@ -757,20 +901,6 @@ export function directAllocateResource(data: {
 }) {
   deployResource(data.resourceId, data.destination, data.operation, 'HIGH');
   isAllocateModalOpen.set(false);
-}
-
-// Track Shipment on Map
-export function trackShipment(shipmentId: string) {
-  selectedShipmentId.set(shipmentId);
-  const list = get(activeShipments);
-  const found = list.find((s) => s.id === shipmentId);
-  if (found && found.path.length > 0) {
-    resourceMapFocus.set({
-      center: found.path[Math.floor(found.path.length / 2)],
-      zoom: 1.25,
-      highlightId: shipmentId
-    });
-  }
 }
 
 // Focus Upcoming Operation

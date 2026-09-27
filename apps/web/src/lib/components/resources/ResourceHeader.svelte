@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     activeResourcesMode,
+    setResourcesMode,
     isOptimizeModalOpen,
     isResourceReportModalOpen
   } from '../../stores/resourceStore';
@@ -17,7 +18,7 @@
   ];
 
   function setMode(mode: ResourcesMode) {
-    activeResourcesMode.set(mode);
+    setResourcesMode(mode);
   }
 </script>
 

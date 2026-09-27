@@ -11,8 +11,10 @@
     isDeployModalOpen,
     isDetailModalOpen,
     isAllocateModalOpen,
-    activeResourceMapLayer
+    activeResourceMapLayer,
+    setMapLayer
   } from '../../stores/resourceStore';
+  import ResourceDetailPopup from './ResourceDetailPopup.svelte';
   import type { ResourceMapMarker } from '../../types/resources';
 
   let containerEl: HTMLDivElement;
@@ -146,7 +148,7 @@
       {#if mapContext.activeTab === 'overview'}
         {#each mapLayerTabs as layer}
           <button
-            on:click={() => activeResourceMapLayer.set(layer)}
+            on:click={() => setMapLayer(layer)}
             class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium transition-all cursor-pointer whitespace-nowrap {
               $activeResourceMapLayer === layer
                 ? 'bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/50 shadow-[0_0_10px_rgba(0,229,255,0.25)]'
@@ -268,10 +270,11 @@
       {@const proj = projectCoords(marker.coords)}
       {@const isSelected = $selectedResourceId === marker.id || $selectedFacilityId === marker.id || $selectedShipmentId === marker.id}
       <button
+        data-marker-id={marker.id}
         on:click|stopPropagation={() => onMarkerClick(marker)}
         on:mouseenter={() => (hoveredMarker = marker)}
         on:mouseleave={() => (hoveredMarker = null)}
-        class="marker-element absolute z-20 transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer p-1 transition-transform focus:outline-none {
+        class="marker-element resource-marker absolute z-20 transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer p-1 transition-transform focus:outline-none {
           isSelected ? 'scale-130 z-30' : 'hover:scale-120'
         }"
         style="left: {proj.x}%; top: {proj.y}%;"
@@ -303,75 +306,11 @@
         </div>
       </button>
     {/each}
+  </div>
 
-    <!-- Interactive Selected Entity Inspector Overlay Card -->
-    {#if mapContext.selectedResource}
-      {@const r = mapContext.selectedResource}
-      <div
-        class="inspector-card absolute top-16 left-4 z-30 w-72 p-3.5 rounded-2xl bg-[#061425]/90 backdrop-blur-xl border border-[#00E5FF]/40 shadow-2xl text-xs font-mono space-y-2.5"
-      >
-        <div class="flex items-center justify-between pb-1.5 border-b border-white/10">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]"></span>
-            <span class="font-bold text-white uppercase tracking-wider truncate">{r.id} — {r.name}</span>
-          </div>
-          <button
-            on:click|stopPropagation={() => selectedResourceId.set(null)}
-            class="text-[#8BA1B8] hover:text-white text-xs cursor-pointer"
-            title="Dismiss Inspector"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div class="space-y-1 text-[11px] text-[#8BA1B8]">
-          <div class="flex justify-between">
-            <span>Type:</span>
-            <span class="text-white font-medium">{r.type}</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Location:</span>
-            <span class="text-[#00E5FF] font-medium">{r.location}</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Status:</span>
-            <span class="font-bold {
-              r.status === 'AVAILABLE' ? 'text-emerald-400' :
-              r.status === 'DEPLOYED' ? 'text-[#00E5FF]' :
-              r.status === 'EN ROUTE' ? 'text-amber-400' : 'text-rose-400'
-            }">{r.status}</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Capacity:</span>
-            <span class="text-white font-medium">{r.capacity}</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Fuel / Power:</span>
-            <span class="text-emerald-400 font-bold">{r.fuelOrStockPct}%</span>
-          </div>
-          {#if r.assignedTo}
-            <div class="flex justify-between">
-              <span>Assigned:</span>
-              <span class="text-white font-medium">{r.assignedTo}</span>
-            </div>
-          {/if}
-        </div>
-
-        <div class="pt-1.5 flex items-center gap-2 border-t border-white/10">
-          <button
-            on:click|stopPropagation={() => isDeployModalOpen.set(true)}
-            class="flex-1 py-1.5 rounded-lg bg-[#00E5FF]/20 border border-[#00E5FF]/60 hover:bg-[#00E5FF]/30 text-[#00E5FF] text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
-          >
-            [Deploy]
-          </button>
-          <button
-            on:click|stopPropagation={() => isDetailModalOpen.set(true)}
-            class="flex-1 py-1.5 rounded-lg bg-white/5 border border-white/15 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
-          >
-            [View Details]
-          </button>
-        </div>
-      </div>
+  <!-- Interactive Selected Entity Inspector Overlay Card (Data-Driven Single Source of Truth) -->
+  {#if mapContext.selectedResource}
+    <ResourceDetailPopup />
     {:else if mapContext.selectedFacility}
       {@const f = mapContext.selectedFacility}
       <div
@@ -469,4 +408,3 @@
       </button>
     </div>
   </div>
-</div>
