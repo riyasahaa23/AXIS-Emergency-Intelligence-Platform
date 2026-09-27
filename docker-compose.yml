@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: docker.io/postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: axis
+      POSTGRES_USER: axis
+      POSTGRES_PASSWORD: axis
+    ports:
+      - "5432:5432"
+    volumes:
+      - axis-postgres:/var/lib/postgresql/data
+      - ./apps/analyser/app/db/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  axis-postgres:

@@ -9,7 +9,8 @@ router = APIRouter(prefix="/api/incidents", tags=["analysis"])
 @router.post("/{incident_id}/analysis")
 async def analyse_incident(incident_id: str, request: Request) -> dict:
     try:
-        incident: Incident = request.app.state.incident_manager.store.get(incident_id)
+        result = request.app.state.incident_manager.store.get(incident_id)
+        incident: Incident = await result if hasattr(result, "__await__") else result
     except IncidentNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Incident not found") from exc
     risk = request.app.state.risk_engine.assess(incident)
