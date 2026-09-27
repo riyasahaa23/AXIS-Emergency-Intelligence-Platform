@@ -14,3 +14,7 @@ class RiskAssessment(BaseModel):
     level: str
     factors: list[RiskFactor]
     explanation: str
+    confidence: float = Field(default=0.9, ge=0, le=1)
+    lower_bound: float = Field(default=0, ge=0, le=100)
+    upper_bound: float = Field(default=100, ge=0, le=100)
+    evidence: list[dict] = Field(default_factory=list)

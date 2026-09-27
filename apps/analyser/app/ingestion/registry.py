@@ -10,7 +10,7 @@ def _dataset(id: str, name: str, publisher: str, endpoint: str, priority: str, d
 
 
 SOURCE_REGISTRY: dict[str, SourceDefinition] = {
-    "gdacs": _api("gdacs", "Global Disaster Alert and Coordination System", "GDACS", "https://www.gdacs.org/gdacsapi/swagger/index.html", "must_have", "Global disaster event and alert metadata."),
+    "gdacs": _api("gdacs", "Global Disaster Alert and Coordination System", "GDACS", "https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH", "must_have", "Global disaster event and alert metadata."),
     "ecmwf": _dataset("ecmwf", "ECMWF Open Data", "ECMWF", "https://www.ecmwf.int/en/forecasts/datasets/open-data", "must_have", "Global numerical weather forecasts."),
     "gpm_imerg": _dataset("gpm_imerg", "NASA GPM IMERG", "NASA", "https://gpm.nasa.gov/data/imerg", "must_have", "Precipitation observations and accumulation."),
     "bhuvan_lulc": _api("bhuvan_lulc", "Bhuvan LULC and Thematic APIs", "ISRO/NRSC", "https://bhuvan-app1.nrsc.gov.in/api/", "must_have", "Indian LULC statistics, AOI analysis, mapping and related geospatial services."),

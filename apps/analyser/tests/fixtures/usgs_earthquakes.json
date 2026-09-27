@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {"generated": 1710000000000, "count": 1},
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "mag": 5.4,
+        "place": "10 km south of Testville",
+        "time": 1710000000000,
+        "updated": 1710000100000,
+        "url": "https://example.invalid/earthquake/test-001",
+        "status": "reviewed",
+        "type": "earthquake"
+      },
+      "geometry": {"type": "Point", "coordinates": [78.123, 17.456, 12.5]},
+      "id": "test-001"
+    }
+  ]
+}

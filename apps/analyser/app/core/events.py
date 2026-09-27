@@ -11,6 +11,7 @@ class DomainEvent(BaseModel):
     event_type: str
     aggregate_id: str
     payload: dict[str, Any] = Field(default_factory=dict)
+    version: int | None = Field(default=None, ge=1)
     occurred_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

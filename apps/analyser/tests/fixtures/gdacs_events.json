@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "eventtype": "EQ",
+        "eventid": "1567000",
+        "episodeid": "1735000",
+        "alertlevel": "orange",
+        "name": "Test earthquake",
+        "country": "India",
+        "fromdate": "2026-09-27T00:00:00Z",
+        "todate": "2026-09-27T01:00:00Z"
+      },
+      "geometry": {"type": "Point", "coordinates": [78.123, 17.456]}
+    }
+  ]
+}

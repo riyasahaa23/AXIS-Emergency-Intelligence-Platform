@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class AnalysisJobRequest(BaseModel):
     incident_id: str
     options: dict[str, Any] = Field(default_factory=dict)
+    idempotency_key: str | None = Field(default=None, max_length=200)
 
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -22,7 +23,7 @@ async def create_analysis_job(payload: AnalysisJobRequest, request: Request):
             raise HTTPException(status_code=404, detail="Incident not found") from exc
     elif incident is None:
         raise HTTPException(status_code=404, detail="Incident not found")
-    return await request.app.state.jobs.submit(payload.incident_id, payload.options)
+    return await request.app.state.jobs.submit(payload.incident_id, payload.options, payload.idempotency_key)
 
 
 @router.get("/{job_id}")

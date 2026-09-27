@@ -2,7 +2,7 @@ from app.models.risk import RiskFactor
 
 
 def score_factors(factors: list[RiskFactor]) -> float:
-    return round(min(sum(factor.contribution for factor in factors), 100), 2)
+    return round(max(0, min(sum(factor.contribution for factor in factors), 100)), 2)
 
 
 def risk_level(score: float) -> str:

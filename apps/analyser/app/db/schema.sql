@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS incidents (
     population BIGINT NOT NULL DEFAULT 0 CHECK (population >= 0),
     vulnerability DOUBLE PRECISION NOT NULL CHECK (vulnerability BETWEEN 0 AND 100),
     status TEXT NOT NULL DEFAULT 'active',
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
     geom GEOGRAPHY(POINT, 4326),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -91,13 +92,109 @@ CREATE TABLE IF NOT EXISTS fire_detections (
 CREATE INDEX IF NOT EXISTS fire_detections_geom_idx
     ON fire_detections USING GIST (geom);
 
+CREATE TABLE IF NOT EXISTS active_fire_detections (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    external_id TEXT NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+    brightness DOUBLE PRECISION,
+    bright_t31 DOUBLE PRECISION,
+    frp DOUBLE PRECISION,
+    confidence TEXT,
+    satellite TEXT,
+    instrument TEXT,
+    acq_date TIMESTAMPTZ,
+    daynight TEXT,
+    geom GEOGRAPHY(POINT, 4326) NOT NULL,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS active_fire_detections_geom_idx ON active_fire_detections USING GIST (geom);
+CREATE INDEX IF NOT EXISTS active_fire_detections_time_idx ON active_fire_detections(acq_date DESC);
+
+CREATE TABLE IF NOT EXISTS weather_forecast_assets (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    forecast_id TEXT NOT NULL,
+    run_date TEXT NOT NULL,
+    run_time INTEGER NOT NULL CHECK (run_time IN (0, 6, 12, 18)),
+    step_hours INTEGER NOT NULL CHECK (step_hours >= 0),
+    stream TEXT NOT NULL,
+    product_type TEXT NOT NULL,
+    model TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    parameters JSONB NOT NULL DEFAULT '[]'::jsonb,
+    object_uri TEXT NOT NULL,
+    checksum_sha256 TEXT NOT NULL,
+    byte_size BIGINT NOT NULL CHECK (byte_size >= 0),
+    content_type TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, forecast_id)
+);
+
+CREATE INDEX IF NOT EXISTS weather_forecast_assets_run_idx
+    ON weather_forecast_assets(run_date, run_time, step_hours);
+
+CREATE TABLE IF NOT EXISTS lulc_products (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    product_id TEXT NOT NULL,
+    scale TEXT NOT NULL,
+    year TEXT NOT NULL,
+    service_type TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    layer TEXT,
+    title TEXT NOT NULL,
+    access_policy TEXT NOT NULL DEFAULT 'public_catalog',
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, product_id)
+);
+
+CREATE INDEX IF NOT EXISTS lulc_products_scale_year_idx ON lulc_products(scale, year);
+
+CREATE TABLE IF NOT EXISTS hospitals (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    external_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    state TEXT,
+    district TEXT,
+    address TEXT,
+    category TEXT,
+    systems_of_medicine TEXT,
+    pin_code TEXT,
+    phone TEXT,
+    email TEXT,
+    website TEXT,
+    specializations TEXT,
+    latitude DOUBLE PRECISION CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION CHECK (longitude BETWEEN -180 AND 180),
+    geom GEOGRAPHY(POINT, 4326),
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS hospitals_geom_idx ON hospitals USING GIST (geom);
+CREATE INDEX IF NOT EXISTS hospitals_state_district_idx ON hospitals(state, district);
+
 CREATE TABLE IF NOT EXISTS incident_events (
     id UUID PRIMARY KEY,
     event_type TEXT NOT NULL,
     aggregate_id TEXT NOT NULL,
+    version INTEGER NOT NULL CHECK (version >= 1),
     payload JSONB NOT NULL DEFAULT '{}'::jsonb,
     occurred_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS incident_events_aggregate_version_idx
+    ON incident_events(aggregate_id, version);
 
 CREATE TABLE IF NOT EXISTS analysis_jobs (
     id TEXT PRIMARY KEY,
@@ -105,6 +202,8 @@ CREATE TABLE IF NOT EXISTS analysis_jobs (
     status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed')),
     progress INTEGER NOT NULL DEFAULT 0 CHECK (progress BETWEEN 0 AND 100),
     current_stage TEXT NOT NULL DEFAULT 'queued',
+    attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+    idempotency_key TEXT UNIQUE,
     request JSONB NOT NULL DEFAULT '{}'::jsonb,
     error TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -136,6 +235,47 @@ CREATE TABLE IF NOT EXISTS hazard_observations (
 
 CREATE INDEX IF NOT EXISTS hazard_observations_geom_idx
     ON hazard_observations USING GIST (geom);
+
+CREATE TABLE IF NOT EXISTS earthquakes (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    external_id TEXT NOT NULL,
+    magnitude DOUBLE PRECISION,
+    place TEXT,
+    observed_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    status TEXT,
+    event_type TEXT,
+    depth_km DOUBLE PRECISION,
+    url TEXT,
+    geom GEOGRAPHY(POINT, 4326) NOT NULL,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS earthquakes_geom_idx ON earthquakes USING GIST (geom);
+CREATE INDEX IF NOT EXISTS earthquakes_observed_idx ON earthquakes(observed_at DESC);
+
+CREATE TABLE IF NOT EXISTS gdacs_events (
+    id BIGSERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL REFERENCES sources(source_id),
+    event_type TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    episode_id TEXT NOT NULL DEFAULT '',
+    alert_level TEXT,
+    name TEXT,
+    country TEXT,
+    observed_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    geom GEOGRAPHY(GEOMETRY, 4326),
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source_id, event_type, event_id, episode_id)
+);
+
+CREATE INDEX IF NOT EXISTS gdacs_events_geom_idx ON gdacs_events USING GIST (geom);
+CREATE INDEX IF NOT EXISTS gdacs_events_observed_idx ON gdacs_events(observed_at DESC);
 
 CREATE TABLE IF NOT EXISTS risk_scores (
     id BIGSERIAL PRIMARY KEY,

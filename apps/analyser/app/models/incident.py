@@ -22,6 +22,7 @@ class IncidentCreate(BaseModel):
 
 
 class IncidentUpdate(BaseModel):
+    expected_version: int | None = Field(default=None, ge=1)
     status: IncidentStatus | None = None
     severity: float | None = Field(default=None, ge=0, le=100)
     exposure: float | None = Field(default=None, ge=0, le=100)
@@ -32,5 +33,6 @@ class IncidentUpdate(BaseModel):
 class Incident(IncidentCreate):
     id: str = Field(default_factory=lambda: f"INC-{uuid4().hex[:8].upper()}")
     status: IncidentStatus = IncidentStatus.ACTIVE
+    version: int = Field(default=1, ge=1)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
