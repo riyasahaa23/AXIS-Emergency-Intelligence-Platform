@@ -8,8 +8,16 @@ dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "pydantic>=2",
-    "pydantic-settings"
+    "pydantic-settings",
+    "httpx>=0.27"
 ]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*", "migrations*"]
 
 [project.optional-dependencies]
 dev = [
@@ -21,7 +29,8 @@ dev = [
 ]
 
 database = [
-    "sqlalchemy>=2",
+    "sqlalchemy[asyncio]>=2",
+    "greenlet",
     "asyncpg",
     "geoalchemy2",
     "pgvector",
