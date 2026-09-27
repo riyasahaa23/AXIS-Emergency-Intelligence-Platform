@@ -10,6 +10,22 @@
     isExportModalOpen,
     setScenarioHazard
   } from '../../stores/scenarioStore';
+  import {
+    setResponseHazard,
+    responseStatistics,
+    isDeployTeamModalOpen,
+    isAllocateResourceModalOpen,
+    isPlanEvacuationModalOpen,
+    isSendAlertModalOpen
+  } from '../../stores/responseStore';
+  import {
+    setResourceHazard,
+    resourceMetrics,
+    isRequestModalOpen,
+    isAllocateModalOpen,
+    isTrackShipmentModalOpen,
+    isResourceReportModalOpen
+  } from '../../stores/resourceStore';
   import type { HazardIncident } from '../../types';
 
   function onActionClick(actionName: string) {
@@ -84,6 +100,10 @@
               selectIncident(inc);
               if ($activeNavSection === 'scenarios') {
                 setScenarioHazard(inc.type);
+              } else if ($activeNavSection === 'response') {
+                setResponseHazard(inc.type);
+              } else if ($activeNavSection === 'resources') {
+                setResourceHazard(inc.type);
               }
             }}
             class="w-full text-left p-2.5 rounded-xl border transition-all duration-200 cursor-pointer {
@@ -213,6 +233,70 @@
             <span class="text-sm">🔗</span>
             <span class="text-[11px] text-white">Share Analysis</span>
           </button>
+        {:else if $activeNavSection === 'response'}
+          <button
+            on:click={() => isDeployTeamModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#00E5FF]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#00E5FF]">▶</span>
+            <span class="text-[11px] text-white">Deploy Teams</span>
+          </button>
+
+          <button
+            on:click={() => isAllocateResourceModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#00E5FF]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#00E5FF]">⛶</span>
+            <span class="text-[11px] text-white">Allocate Resources</span>
+          </button>
+
+          <button
+            on:click={() => isPlanEvacuationModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#00E5FF]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#00E5FF]">👥</span>
+            <span class="text-[11px] text-white">Plan Evacuation</span>
+          </button>
+
+          <button
+            on:click={() => isSendAlertModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#EF4444]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#EF4444]">((•))</span>
+            <span class="text-[11px] text-white">Send Alert</span>
+          </button>
+        {:else if $activeNavSection === 'resources'}
+          <button
+            on:click={() => isRequestModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#00E5FF]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#00E5FF]">➕</span>
+            <span class="text-[11px] text-white">Request Stock</span>
+          </button>
+
+          <button
+            on:click={() => isAllocateModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#F59E0B]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#F59E0B]">📦</span>
+            <span class="text-[11px] text-white">Allocate Asset</span>
+          </button>
+
+          <button
+            on:click={() => isTrackShipmentModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#10B981]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#10B981]">🚚</span>
+            <span class="text-[11px] text-white">Track Logistics</span>
+          </button>
+
+          <button
+            on:click={() => isResourceReportModalOpen.set(true)}
+            class="flex items-center gap-2 p-2.5 rounded-xl bg-[#061425]/60 hover:bg-[#061425] border border-white/5 hover:border-[#8B5CF6]/50 text-left transition-all group cursor-pointer"
+          >
+            <span class="text-sm text-[#8B5CF6]">📊</span>
+            <span class="text-[11px] text-white">Export SITREP</span>
+          </button>
         {:else}
           <button
             on:click={() => onActionClick('Impact Analysis')}
@@ -265,6 +349,10 @@
             SCENARIO INSIGHTS
           {:else if $activeNavSection === 'analysis'}
             ANALYSIS STATISTICS
+          {:else if $activeNavSection === 'response'}
+            RESPONSE STATISTICS
+          {:else if $activeNavSection === 'resources'}
+            LOGISTICS TELEMETRY
           {:else}
             GLOBAL STATISTICS
           {/if}
@@ -338,6 +426,74 @@
             <div class="text-[10px] text-[#8BA1B8]">Avg. Analysis Time</div>
           </div>
         </div>
+      {:else if $activeNavSection === 'response'}
+        <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[#00E5FF]">👥</span>
+              <span class="text-sm font-bold text-white">{$responseStatistics.personnelDeployed.toLocaleString()}</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">People Deployed</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[#8B5CF6]">🎯</span>
+              <span class="text-sm font-bold text-white">{$responseStatistics.activeOperations}</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">Active Operations</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-emerald-400">📊</span>
+              <span class="text-sm font-bold text-emerald-400">{$responseStatistics.missionCompletion}%</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">Completion Rate</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-cyan-400">🌐</span>
+              <span class="text-sm font-bold text-cyan-400">{$responseStatistics.peopleReached}</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">People Reached</div>
+          </div>
+        </div>
+      {:else if $activeNavSection === 'resources'}
+        <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[#00E5FF]">📦</span>
+              <span class="text-sm font-bold text-white">{$resourceMetrics.totalAssets}</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">Total Registered</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-emerald-400">⚡</span>
+              <span class="text-sm font-bold text-emerald-400">{$resourceMetrics.readinessRate}%</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">Readiness Index</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[#F59E0B]">🚀</span>
+              <span class="text-sm font-bold text-[#F59E0B]">{$resourceMetrics.deployed}</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">Active In Field</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5 flex flex-col">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-purple-400">📊</span>
+              <span class="text-sm font-bold text-purple-400">{$resourceMetrics.utilizationRate}%</span>
+            </div>
+            <div class="text-[10px] text-[#8BA1B8]">Fleet Utilization</div>
+          </div>
+        </div>
       {:else}
         <div class="grid grid-cols-2 gap-2 text-xs font-mono">
           <div class="p-2.5 rounded-xl bg-[#061425]/50 border border-white/5">
@@ -400,6 +556,8 @@
             <span>{
               $activeNavSection === 'scenarios' ? 'Simulation Engine Operational' :
               $activeNavSection === 'analysis' ? 'Analysis Engine Operational' :
+              $activeNavSection === 'response' ? 'Response Engine Operational' :
+              $activeNavSection === 'resources' ? 'Logistics Engine Operational' :
               'All Systems Operational'
             }</span>
             <!-- Segmented green activity dots -->

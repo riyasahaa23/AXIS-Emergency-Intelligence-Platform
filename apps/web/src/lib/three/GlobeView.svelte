@@ -30,13 +30,16 @@
   let targetDimFactor = 1.0;
 
   // Camera animation / interaction state
+  const DEFAULT_CAMERA_DISTANCE = 16.2;
+  const DEFAULT_ROTATION = { x: 0.15, y: -1.2 };
+
   let isDragging = false;
   let prevMousePos = { x: 0, y: 0 };
-  let cameraTargetDistance = 13.0; // Perfectly frames the entire Earth globe in center
-  let cameraDistance = 13.0;
+  let cameraTargetDistance = DEFAULT_CAMERA_DISTANCE; // Perfectly frames Earth without dominating or clipping
+  let cameraDistance = DEFAULT_CAMERA_DISTANCE;
   let rotationVelocity = { x: 0, y: 0.0008 };
-  let targetRotation = { x: 0.15, y: -1.2 };
-  let currentRotation = { x: 0.15, y: -1.2 };
+  let targetRotation = { ...DEFAULT_ROTATION };
+  let currentRotation = { ...DEFAULT_ROTATION };
 
   // Target camera fly-to interpolation
   let flyToTarget: { x: number; y: number; distance: number; progress: number } | null = null;
@@ -60,7 +63,7 @@
 
     const unsubscribeJarvis = isJarvisCentralActive.subscribe((active) => {
       targetDimFactor = active ? 0.88 : 1.0;
-      cameraTargetDistance = active ? 11.8 : 11.2;
+      cameraTargetDistance = active ? 14.5 : DEFAULT_CAMERA_DISTANCE;
     });
 
     return () => {
@@ -556,7 +559,22 @@
 
   function onWheel(e: WheelEvent) {
     cameraTargetDistance += e.deltaY * 0.008;
-    cameraTargetDistance = Math.max(8.0, Math.min(18.0, cameraTargetDistance));
+    cameraTargetDistance = Math.max(9.0, Math.min(24.0, cameraTargetDistance));
+  }
+
+  function handleZoomIn() {
+    cameraTargetDistance = Math.max(9.0, cameraTargetDistance - 1.8);
+  }
+
+  function handleZoomOut() {
+    cameraTargetDistance = Math.min(24.0, cameraTargetDistance + 1.8);
+  }
+
+  function handleResetView() {
+    flyToTarget = null;
+    cameraTargetDistance = DEFAULT_CAMERA_DISTANCE;
+    currentRotation = { ...DEFAULT_ROTATION };
+    targetRotation = { ...DEFAULT_ROTATION };
   }
 
   function onWindowResize() {
@@ -572,4 +590,29 @@
 <div class="relative w-full h-full overflow-hidden select-none">
   <div bind:this={container} class="w-full h-full cursor-grab active:cursor-grabbing"></div>
   <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,229,255,0.08)_0%,rgba(2,7,17,0.55)_65%,rgba(2,7,17,0.92)_100%)]"></div>
+
+  <!-- Earth Globe Interactive Camera Controls (Zoom In, Zoom Out, Reset) -->
+  <div class="absolute bottom-24 right-5 z-20 flex flex-col items-center gap-1.5 p-1 rounded-xl bg-[#061425]/85 backdrop-blur-md border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)] pointer-events-auto font-mono">
+    <button
+      on:click={handleZoomIn}
+      class="w-7 h-7 rounded-lg bg-black/40 hover:bg-[#00E5FF]/20 text-[#8BA1B8] hover:text-[#00E5FF] border border-white/5 hover:border-[#00E5FF]/40 flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
+      title="Zoom In Earth (+)"
+    >
+      +
+    </button>
+    <button
+      on:click={handleZoomOut}
+      class="w-7 h-7 rounded-lg bg-black/40 hover:bg-[#00E5FF]/20 text-[#8BA1B8] hover:text-[#00E5FF] border border-white/5 hover:border-[#00E5FF]/40 flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
+      title="Zoom Out Earth (−)"
+    >
+      −
+    </button>
+    <button
+      on:click={handleResetView}
+      class="px-2 py-1 rounded-lg bg-black/40 hover:bg-[#00E5FF]/20 text-[#8BA1B8] hover:text-[#00E5FF] border border-white/5 hover:border-[#00E5FF]/40 flex items-center justify-center text-[9px] font-bold tracking-wider transition-all cursor-pointer"
+      title="Reset Earth View to Starting Perspective"
+    >
+      RESET
+    </button>
+  </div>
 </div>

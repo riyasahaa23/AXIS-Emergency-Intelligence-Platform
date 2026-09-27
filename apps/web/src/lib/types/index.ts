@@ -208,3 +208,5 @@ export interface IncidentAnalysisData {
 
 export * from './scenario';
 
+export * from './response';
+export * from './resources';

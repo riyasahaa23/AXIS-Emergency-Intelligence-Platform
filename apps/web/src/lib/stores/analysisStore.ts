@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import type { HazardSelectorType, AnalysisMode, IncidentAnalysisData } from '../types';
 import { selectedIncident, selectedIncidentId, globeFocusTarget } from './incidentStore';
 import { getAnalysisData } from '../mock/analysis';
@@ -6,6 +6,22 @@ import { ANALYSIS_SCENARIOS, HAZARD_INCIDENT_MAP, type AnalysisScenario } from '
 
 export const activeHazardType = writable<HazardSelectorType>('flood');
 export const activeAnalysisMode = writable<AnalysisMode>('current');
+
+// Automatically synchronize active hazard when selectedIncident changes across the platform
+selectedIncident.subscribe((inc) => {
+  if (!inc) return;
+  const currentHazard = get(activeHazardType);
+  let targetHazard: HazardSelectorType = 'flood';
+  if (inc.type === 'cyclone') targetHazard = 'cyclone';
+  else if (inc.type === 'wildfire') targetHazard = 'wildfire';
+  else if (inc.type === 'earthquake') targetHazard = 'earthquake';
+  else if (inc.type === 'compound') targetHazard = 'multi_hazard';
+  else if (inc.type === 'flood') targetHazard = 'flood';
+
+  if (currentHazard !== targetHazard) {
+    selectHazard(targetHazard);
+  }
+});
 export const isRiskDriversOpen = writable<boolean>(false);
 export const isAnalyzing = writable<boolean>(false);
 export const analysisStage = writable<string>('VERIFYING RESULT');

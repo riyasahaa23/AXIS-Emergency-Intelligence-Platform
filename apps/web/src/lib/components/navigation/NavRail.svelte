@@ -46,7 +46,7 @@
         on:click={() => setSection(item.id)}
         class="w-full flex items-center {$isNavCollapsed ? 'justify-center px-1' : 'justify-between px-3'} py-2 rounded-xl text-xs font-mono transition-all duration-200 cursor-pointer {
           $activeNavSection === item.id
-            ? 'bg-[#3D7CFF]/20 text-white border border-[#00E5FF]/40 shadow-[0_0_15px_rgba(0,229,255,0.25)]'
+            ? 'bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/60 shadow-[0_0_15px_rgba(0,229,255,0.25)] font-semibold'
             : 'text-[#8BA1B8] hover:text-white hover:bg-[#061425]/60 border border-transparent'
         }"
         title={item.label}

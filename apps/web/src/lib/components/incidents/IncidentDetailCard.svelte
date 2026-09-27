@@ -1,36 +1,59 @@
 <script lang="ts">
   import { selectedIncident, clearIncidentSelection } from '../../stores/incidentStore';
   import { submitCommand } from '../../stores/commandStore';
+  import { isIncidentTelemetryCollapsed } from '../../stores/systemStore';
 
   function onAction(actionName: string) {
     if (!$selectedIncident) return;
     submitCommand(`${actionName} for ${$selectedIncident.name} in ${$selectedIncident.region}, ${$selectedIncident.country}`);
   }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && !$isIncidentTelemetryCollapsed) {
+      isIncidentTelemetryCollapsed.set(true);
+    }
+  }
 </script>
 
-{#if $selectedIncident}
-  <div class="p-4 rounded-2xl bg-[#061425]/85 backdrop-blur-xl border border-[#00E5FF]/40 shadow-[0_8px_32px_rgba(0,0,0,0.7),0_0_20px_rgba(0,229,255,0.2)] select-none w-80 font-mono animate-in fade-in zoom-in-95 duration-200">
-    <!-- Header -->
-    <div class="flex items-start justify-between pb-2 mb-3 border-b border-[#00E5FF]/20">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full {$selectedIncident.severity === 'critical' ? 'bg-[#EF4444] animate-ping' : 'bg-[#F59E0B]'}"></span>
-          <span class="text-xs font-bold uppercase tracking-widest text-[#00E5FF]">Incident Telemetry</span>
-        </div>
-        <h3 class="text-sm font-bold text-white mt-0.5">{$selectedIncident.name}</h3>
-        <p class="text-[11px] text-[#8BA1B8]">{$selectedIncident.region}, {$selectedIncident.country}</p>
-      </div>
+<svelte:window on:keydown={handleKeydown} />
 
-      <button
-        on:click={clearIncidentSelection}
-        class="text-[#8BA1B8] hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-        title="Close inspector"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
+{#if $selectedIncident}
+  {#if $isIncidentTelemetryCollapsed}
+    <!-- Collapsed Telemetry Reopen Control -->
+    <button
+      on:click={() => isIncidentTelemetryCollapsed.set(false)}
+      class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#061425]/90 backdrop-blur-md border border-[#00E5FF]/40 text-[#00E5FF] hover:text-white hover:border-[#00E5FF] shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-all cursor-pointer font-mono text-xs group"
+      title="Restore Incident Telemetry Panel"
+    >
+      <span class="w-2 h-2 rounded-full {$selectedIncident.severity === 'critical' ? 'bg-[#EF4444] animate-ping' : 'bg-[#F59E0B]'}"></span>
+      <span class="text-[10px] font-bold uppercase tracking-wider truncate max-w-[200px]">
+        {$selectedIncident.name} Telemetry
+      </span>
+      <span class="text-[#8BA1B8] group-hover:text-[#00E5FF] text-xs">▶</span>
+    </button>
+  {:else}
+    <div class="p-4 rounded-2xl bg-[#061425]/85 backdrop-blur-xl border border-[#00E5FF]/40 shadow-[0_8px_32px_rgba(0,0,0,0.7),0_0_20px_rgba(0,229,255,0.2)] select-none w-80 font-mono animate-in fade-in zoom-in-95 duration-200">
+      <!-- Header -->
+      <div class="flex items-start justify-between pb-2 mb-3 border-b border-[#00E5FF]/20">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full {$selectedIncident.severity === 'critical' ? 'bg-[#EF4444] animate-ping' : 'bg-[#F59E0B]'}"></span>
+            <span class="text-xs font-bold uppercase tracking-widest text-[#00E5FF]">Incident Telemetry</span>
+          </div>
+          <h3 class="text-sm font-bold text-white mt-0.5">{$selectedIncident.name}</h3>
+          <p class="text-[11px] text-[#8BA1B8]">{$selectedIncident.region}, {$selectedIncident.country}</p>
+        </div>
+
+        <button
+          on:click={() => isIncidentTelemetryCollapsed.set(true)}
+          class="text-[#8BA1B8] hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+          title="Collapse telemetry panel (Esc)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
     <!-- Severity & Risk Score Meter -->
     <div class="grid grid-cols-2 gap-2 mb-3">
@@ -113,4 +136,5 @@
       </button>
     </div>
   </div>
+  {/if}
 {/if}

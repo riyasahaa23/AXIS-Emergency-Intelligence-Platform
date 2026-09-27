@@ -18,6 +18,30 @@ export const activeScenarioView = writable<ScenarioViewTab>('builder');
 export const activeScenarioDetailTab = writable<ScenarioDetailTab>('impact_projection');
 export const selectedScenarioHazard = writable<string>('flood');
 
+// Automatically synchronize scenario hazard when selectedIncident changes globally
+selectedIncident.subscribe((inc) => {
+  if (!inc) return;
+  const currentHazard = get(selectedScenarioHazard);
+  let targetHazard = 'flood';
+  if (inc.type === 'cyclone') targetHazard = 'cyclone';
+  else if (inc.type === 'wildfire') targetHazard = 'wildfire';
+  else if (inc.type === 'earthquake') targetHazard = 'earthquake';
+  else if (inc.type === 'compound') targetHazard = 'multi_hazard';
+  else if (inc.type === 'flood') targetHazard = 'flood';
+
+  if (currentHazard !== targetHazard) {
+    const config = HAZARD_SCENARIO_CONFIGS[targetHazard] || HAZARD_SCENARIO_CONFIGS.flood;
+    selectedScenarioHazard.set(config.hazardType);
+    const newParams: Record<string, number> = {};
+    config.parameters.forEach((p) => { newParams[p.id] = p.defaultValue; });
+    scenarioParameters.set(newParams);
+    const newFactors: Record<string, boolean> = {};
+    config.factors.forEach((f) => { newFactors[f.id] = f.defaultActive; });
+    scenarioFactors.set(newFactors);
+    scenarioActiveExtraFactorIds.set([]);
+  }
+});
+
 // 2. Active Scenario Configuration Stores
 export const scenarioParameters = writable<Record<string, number>>({
   rainfallIncrease: 50,
