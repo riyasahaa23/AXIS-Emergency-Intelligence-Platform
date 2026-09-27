@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, NonNegativeInt
 
 
 class Resource(BaseModel):
@@ -13,3 +13,7 @@ class ResourceAllocation(BaseModel):
     requested: int = Field(ge=0)
     allocated: int = Field(ge=0)
     unmet: int = Field(ge=0)
+
+
+class ResourceRequest(BaseModel):
+    requests: dict[str, NonNegativeInt] = Field(default_factory=dict)

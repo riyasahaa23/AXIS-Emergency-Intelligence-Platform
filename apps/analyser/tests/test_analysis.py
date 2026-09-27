@@ -28,6 +28,8 @@ def test_incident_analysis_and_response(client):
     response = client.post(f"/api/incidents/{incident_id}/responses")
     assert response.status_code == 200
     assert response.json()["priority"] == "urgent"
+    assert response.json()["approval_required"] is True
+    assert response.json()["execution_status"] == "recommendation_only"
 
 
 def test_scenario_comparison(client):
