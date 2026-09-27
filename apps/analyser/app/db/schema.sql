@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS incidents (
     population BIGINT NOT NULL DEFAULT 0 CHECK (population >= 0),
     vulnerability DOUBLE PRECISION NOT NULL CHECK (vulnerability BETWEEN 0 AND 100),
     status TEXT NOT NULL DEFAULT 'active',
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
     geom GEOGRAPHY(POINT, 4326),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -187,9 +188,13 @@ CREATE TABLE IF NOT EXISTS incident_events (
     id UUID PRIMARY KEY,
     event_type TEXT NOT NULL,
     aggregate_id TEXT NOT NULL,
+    version INTEGER NOT NULL CHECK (version >= 1),
     payload JSONB NOT NULL DEFAULT '{}'::jsonb,
     occurred_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS incident_events_aggregate_version_idx
+    ON incident_events(aggregate_id, version);
 
 CREATE TABLE IF NOT EXISTS analysis_jobs (
     id TEXT PRIMARY KEY,

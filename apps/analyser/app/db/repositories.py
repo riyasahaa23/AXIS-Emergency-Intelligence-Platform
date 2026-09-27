@@ -2,8 +2,7 @@ from datetime import UTC, datetime
 import json
 from typing import Protocol
 
-from app.models.incident import Incident, IncidentCreate
-from app.models.incident import IncidentStatus, IncidentUpdate
+from app.models.incident import Incident, IncidentCreate, IncidentStatus, IncidentUpdate
 
 
 class AnalysisJobRepository:
@@ -108,6 +107,7 @@ class PostgresIncidentRepository:
             location=values["location"], severity=values["severity"], exposure=values["exposure"],
             population=values["population"], vulnerability=values["vulnerability"],
             status=IncidentStatus(values["status"]), created_at=values["created_at"], updated_at=values["updated_at"],
+            version=values.get("version", 1),
         )
 
     async def create(self, data: IncidentCreate) -> Incident:
@@ -147,12 +147,55 @@ class PostgresIncidentRepository:
         from sqlalchemy import text
 
         current = await self.get(incident_id)
-        values = {**data.model_dump(exclude_unset=True), "id": incident_id, "updated_at": datetime.now(UTC)}
+        expected_version = data.expected_version
+        values = {
+            **data.model_dump(exclude_unset=True, exclude={"expected_version"}),
+            "id": incident_id,
+            "updated_at": datetime.now(UTC),
+            "version": current.version + 1,
+        }
+        if expected_version is not None and expected_version != current.version:
+            from app.incident.state import IncidentVersionConflictError
+
+            raise IncidentVersionConflictError(incident_id, expected_version, current.version)
         if not values.get("status"):
             values["status"] = current.status
         assignments = ", ".join(f"{field} = :{field}" for field in values if field not in {"id"})
         async with self.engine.begin() as connection:
             result = await connection.execute(
-                text(f"UPDATE incidents SET {assignments} WHERE id = :id RETURNING *"), values
+                text(f"UPDATE incidents SET {assignments} WHERE id = :id AND version = :expected_version RETURNING *"),
+                {**values, "expected_version": current.version},
             )
-            return self._incident(result.mappings().one())
+            row = result.mappings().first()
+            if row is None:
+                from app.incident.state import IncidentVersionConflictError
+
+                raise IncidentVersionConflictError(incident_id, expected_version or current.version, current.version)
+            return self._incident(row)
+
+    async def record_event(self, event) -> None:
+        from sqlalchemy import text
+
+        async with self.engine.begin() as connection:
+            await connection.execute(
+                text("""INSERT INTO incident_events (id, event_type, aggregate_id, version, payload, occurred_at)
+                    VALUES (:id, :event_type, :aggregate_id, :version, CAST(:payload AS JSONB), :occurred_at)
+                    ON CONFLICT (id) DO NOTHING"""),
+                {**event.model_dump(mode="python"), "payload": json.dumps(event.payload)},
+            )
+
+    async def timeline(self, incident_id: str) -> list:
+        from sqlalchemy import text
+        from app.core.events import DomainEvent
+
+        await self.get(incident_id)
+        async with self.engine.connect() as connection:
+            result = await connection.execute(
+                text("SELECT * FROM incident_events WHERE aggregate_id = :id ORDER BY version"),
+                {"id": incident_id},
+            )
+            return [DomainEvent.model_validate(row) for row in result.mappings().all()]
+
+    async def evidence(self, incident_id: str) -> list[dict]:
+        events = await self.timeline(incident_id)
+        return [item for event in events for item in event.payload.get("evidence", []) if isinstance(item, dict)]

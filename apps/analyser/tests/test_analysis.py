@@ -37,3 +37,25 @@ def test_scenario_comparison(client):
     )
     assert comparison.status_code == 200
     assert comparison.json()["score_delta"] > 0
+
+
+def test_incident_timeline_and_optimistic_versioning(client):
+    incident = create_incident(client)
+    timeline = client.get(f"/api/incidents/{incident['id']}/timeline")
+    assert timeline.status_code == 200
+    assert [event["event_type"] for event in timeline.json()] == ["INCIDENT_CREATED"]
+    assert timeline.json()[0]["version"] == 1
+
+    updated = client.patch(
+        f"/api/incidents/{incident['id']}",
+        json={"expected_version": 1, "severity": 85},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["version"] == 2
+
+    stale = client.patch(
+        f"/api/incidents/{incident['id']}",
+        json={"expected_version": 1, "severity": 90},
+    )
+    assert stale.status_code == 409
+    assert stale.json()["detail"]["code"] == "INCIDENT_VERSION_CONFLICT"
