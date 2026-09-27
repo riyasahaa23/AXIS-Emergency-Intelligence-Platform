@@ -23,6 +23,7 @@ def test_incident_analysis_and_response(client):
     assert analysis.status_code == 200
     assert analysis.json()["risk"]["level"] == "high"
     assert analysis.json()["verification"]["is_valid"] is True
+    assert 0 <= analysis.json()["risk"]["lower_bound"] <= analysis.json()["risk"]["score"] <= analysis.json()["risk"]["upper_bound"] <= 100
 
     response = client.post(f"/api/incidents/{incident_id}/responses")
     assert response.status_code == 200
