@@ -1,0 +1,48 @@
+﻿name: AXIS Frontend CI
+
+on:
+  push:
+    branches: [ master, main, integrated-axis-frontend ]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/frontend-ci.yml'
+      - 'package*.json'
+      - 'turbo.json'
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/frontend-ci.yml'
+      - 'package*.json'
+
+jobs:
+  validate-frontend:
+    name: Lint, Test & Build Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Workspace Dependencies
+        run: npm install
+        working-directory: .
+
+      - name: Run Vitest Unit & Contract Tests
+        run: npm run test
+
+      - name: Run Production Bundle Build
+        run: npm run build
+
+      - name: Verify Clean SSR Output
+        run: test -d .svelte-kit/output

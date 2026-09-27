@@ -93,9 +93,9 @@
       <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
         <!-- 3D Graphics & Canvas Fidelity -->
         <div class="space-y-3">
-          <label class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
+          <h3 class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
             3D Earth & Globe Visualization Fidelity
-          </label>
+          </h3>
           <div class="grid grid-cols-3 gap-3">
             {#each [
               { id: 'ultra', label: 'ULTRA (60 FPS)', desc: 'Full volumetric clouds, bloom & high-res terrain' },
@@ -116,9 +116,9 @@
 
         <!-- Telemetry Polling Rate -->
         <div class="space-y-3">
-          <label class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
+          <h3 class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
             Telemetry Polling & Health Cycle
-          </label>
+          </h3>
           <div class="grid grid-cols-3 gap-3">
             {#each [
               { id: '1s', label: 'REAL-TIME (1s)', desc: 'Mission-critical continuous pipeline' },
@@ -139,9 +139,9 @@
 
         <!-- Sensor Feeds & GIS Layers -->
         <div class="space-y-3">
-          <label class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
+          <h3 class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
             Active Orbital Sensor Constellations
-          </label>
+          </h3>
           <div class="space-y-2 bg-[#061425]/40 p-3 rounded-lg border border-white/5">
             <label class="flex items-center justify-between p-2 rounded hover:bg-white/5 cursor-pointer">
               <span class="text-xs text-white">Copernicus Sentinel-1 SAR Radar Flood Swath</span>
@@ -160,9 +160,9 @@
 
         <!-- Audio & Synthetic Speech -->
         <div class="space-y-3">
-          <label class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
+          <h3 class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
             Audio Tactical Cues & AXIS Neural Speech
-          </label>
+          </h3>
           <div class="grid grid-cols-2 gap-3">
             <label class="flex items-center justify-between p-3 rounded-lg bg-[#061425]/60 border border-white/10 cursor-pointer">
               <div>
@@ -183,9 +183,9 @@
 
         <!-- Backend Orchestrator Bridge -->
         <div class="space-y-3">
-          <label class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
+          <h3 class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
             Backend Pipeline Bridge
-          </label>
+          </h3>
           <div class="p-3 rounded-lg bg-[#061425]/60 border border-white/10 space-y-2">
             <div class="flex items-center justify-between text-xs">
               <span class="text-[#8BA1B8]">FastAPI Server Target:</span>

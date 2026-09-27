@@ -74,8 +74,31 @@
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('wheel', onWheel);
-      cancelAnimationFrame(animationFrameId);
-      if (renderer) renderer.dispose();
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      if (scene) {
+        scene.traverse((obj) => {
+          if ((obj as THREE.Mesh).isMesh) {
+            const mesh = obj as THREE.Mesh;
+            if (mesh.geometry) mesh.geometry.dispose();
+            if (mesh.material) {
+              if (Array.isArray(mesh.material)) {
+                mesh.material.forEach((m) => m.dispose());
+              } else {
+                mesh.material.dispose();
+              }
+            }
+          }
+        });
+      }
+      if (renderer) {
+        renderer.dispose();
+        renderer.forceContextLoss();
+        if (container && renderer.domElement && container.contains(renderer.domElement)) {
+          container.removeChild(renderer.domElement);
+        }
+      }
     };
   });
 
@@ -588,7 +611,8 @@
 </script>
 
 <div class="relative w-full h-full overflow-hidden select-none">
-  <div bind:this={container} class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+  <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+  <div bind:this={container} class="w-full h-full cursor-grab active:cursor-grabbing" role="region" aria-label="3D Interactive Earth Globe Visualizer" tabindex="0"></div>
   <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,229,255,0.08)_0%,rgba(2,7,17,0.55)_65%,rgba(2,7,17,0.92)_100%)]"></div>
 
   <!-- Earth Globe Interactive Camera Controls (Zoom In, Zoom Out, Reset) -->

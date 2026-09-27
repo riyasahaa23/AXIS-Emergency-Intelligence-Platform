@@ -60,10 +60,11 @@
       <form on:submit|preventDefault={handleSubmit} class="py-4 space-y-3.5 text-xs font-mono">
         <!-- Resource Selection -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="deploy-target-resource" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Selected Resource
           </label>
           <select
+            id="deploy-target-resource"
             bind:value={targetResourceId}
             class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#00E5FF]"
           >
@@ -77,10 +78,11 @@
 
         <!-- Destination -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="deploy-destination" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Operational Destination
           </label>
           <input
+            id="deploy-destination"
             type="text"
             bind:value={destination}
             required
@@ -90,10 +92,11 @@
 
         <!-- Operation Name -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="deploy-operation" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Assigned Operation Directive
           </label>
           <input
+            id="deploy-operation"
             type="text"
             bind:value={operation}
             required
@@ -103,10 +106,11 @@
 
         <!-- Priority Selection -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="deploy-priority" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Deployment Priority
           </label>
           <select
+            id="deploy-priority"
             bind:value={priority}
             class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#00E5FF]"
           >

@@ -67,10 +67,11 @@
       <!-- Form Inputs -->
       <form on:submit|preventDefault={handleSubmit} class="py-4 space-y-3.5 text-xs font-mono">
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="alert-title-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Alert Headline
           </label>
           <input
+            id="alert-title-input"
             type="text"
             bind:value={title}
             required
@@ -80,10 +81,11 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="alert-severity-select" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Severity Level
             </label>
             <select
+              id="alert-severity-select"
               bind:value={severity}
               class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#EF4444]"
             >
@@ -94,10 +96,11 @@
           </div>
 
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="alert-region-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Geographic Scope
             </label>
             <input
+              id="alert-region-input"
               type="text"
               bind:value={targetRegion}
               required
@@ -108,9 +111,9 @@
 
         <!-- Channels selection -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <span class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Broadcast Distribution Channels
-          </label>
+          </span>
           <div class="flex flex-wrap gap-1.5">
             {#each channelOptions as ch}
               <button
@@ -129,10 +132,11 @@
         </div>
 
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="alert-instructions-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Broadcast Message Instructions
           </label>
           <textarea
+            id="alert-instructions-input"
             bind:value={instructions}
             rows="3"
             required

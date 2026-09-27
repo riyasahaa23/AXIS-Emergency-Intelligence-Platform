@@ -77,10 +77,11 @@
         {#if !isReviewStep}
           <div class="space-y-3.5">
             <div>
-              <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+              <label for="req-cat" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                 Resource Category
               </label>
               <select
+                id="req-cat"
                 bind:value={category}
                 class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#8B5CF6]"
               >
@@ -91,10 +92,11 @@
             </div>
 
             <div>
-              <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+              <label for="req-spec" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                 Resource Specification / Model
               </label>
               <input
+                id="req-spec"
                 type="text"
                 bind:value={resourceType}
                 required
@@ -104,10 +106,11 @@
 
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+                <label for="req-qty" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                   Quantity
                 </label>
                 <input
+                  id="req-qty"
                   type="number"
                   bind:value={quantity}
                   min="1"
@@ -117,10 +120,11 @@
               </div>
 
               <div>
-                <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+                <label for="req-pri" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                   Priority
                 </label>
                 <select
+                  id="req-pri"
                   bind:value={priority}
                   class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#8B5CF6]"
                 >
@@ -133,10 +137,11 @@
             </div>
 
             <div>
-              <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+              <label for="req-dest" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                 Target Destination / Delivery Hub
               </label>
               <input
+                id="req-dest"
                 type="text"
                 bind:value={destination}
                 required
@@ -146,20 +151,22 @@
 
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+                <label for="req-by" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                   Requested By
                 </label>
                 <input
+                  id="req-by"
                   type="text"
                   bind:value={requestedBy}
                   class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#8B5CF6]"
                 />
               </div>
               <div>
-                <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+                <label for="req-win" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                   Required By (Window)
                 </label>
                 <input
+                  id="req-win"
                   type="text"
                   bind:value={requiredBy}
                   class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#8B5CF6]"
@@ -168,10 +175,11 @@
             </div>
 
             <div>
-              <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+              <label for="req-just" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
                 Operational Justification
               </label>
               <textarea
+                id="req-just"
                 bind:value={reason}
                 rows="2"
                 class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#8B5CF6] font-sans text-xs"

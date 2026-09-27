@@ -35,7 +35,10 @@
   <div class="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
     {#each $communicationChannels as channel}
       <div
+        role="button"
+        tabindex="0"
         on:click={() => selectCommunicationChannel(channel.id)}
+        on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectCommunicationChannel(channel.id); }}
         class="p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 {
           $activeCommunicationChannelId === channel.id
             ? 'bg-[#00E5FF]/15 border-[#00E5FF]/60 shadow-[0_0_15px_rgba(0,229,255,0.2)]'

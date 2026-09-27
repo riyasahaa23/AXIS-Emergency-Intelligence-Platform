@@ -61,10 +61,11 @@
       <!-- Form Inputs -->
       <form on:submit|preventDefault={handleSubmit} class="py-4 space-y-3.5 text-xs font-mono">
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="pe-corridor" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Corridor Designation
           </label>
           <input
+            id="pe-corridor"
             type="text"
             bind:value={routeName}
             required
@@ -74,10 +75,11 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="pe-origin" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Origin (Vulnerable Sector)
             </label>
             <input
+              id="pe-origin"
               type="text"
               bind:value={origin}
               required
@@ -86,10 +88,11 @@
           </div>
 
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="pe-dest" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Destination Shelter Hub
             </label>
             <input
+              id="pe-dest"
               type="text"
               bind:value={destination}
               required
@@ -99,10 +102,11 @@
         </div>
 
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="pe-time" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Target Clearance Time (Hours)
           </label>
           <input
+            id="pe-time"
             type="number"
             step="0.5"
             bind:value={clearanceTime}

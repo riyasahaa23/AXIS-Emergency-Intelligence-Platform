@@ -55,10 +55,11 @@
       <!-- Form Inputs -->
       <form on:submit|preventDefault={handleSubmit} class="py-4 space-y-3.5 text-xs font-mono">
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="alloc-res-target-select" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Target Resource
           </label>
           <select
+            id="alloc-res-target-select"
             bind:value={selectedId}
             class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#00E5FF]"
           >
@@ -83,10 +84,11 @@
         </div>
 
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="alloc-res-quantity-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Allocation Quantity
           </label>
           <input
+            id="alloc-res-quantity-input"
             type="number"
             bind:value={quantity}
             min="1"
@@ -108,10 +110,11 @@
         {/if}
 
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="alloc-res-destination-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Destination Staging Base
           </label>
           <input
+            id="alloc-res-destination-input"
             type="text"
             bind:value={destination}
             required
@@ -120,10 +123,11 @@
         </div>
 
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="alloc-res-mission-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Mission / Directive Name
           </label>
           <input
+            id="alloc-res-mission-input"
             type="text"
             bind:value={operation}
             required

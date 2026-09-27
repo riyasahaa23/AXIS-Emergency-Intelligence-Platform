@@ -562,9 +562,11 @@
   
   <!-- Canvas Viewport -->
   <div class="relative flex-1 w-full h-full overflow-hidden cursor-grab active:cursor-grabbing">
-    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
+    <!-- svelte-ignore a11y-mouse-events-have-key-events a11y-no-noninteractive-element-interactions a11y-no-noninteractive-tabindex -->
     <canvas
       bind:this={canvas}
+      aria-label="Scenario simulation map canvas"
+      tabindex="0"
       on:mousedown={handleMouseDown}
       on:mousemove={handleMouseMove}
       on:mouseup={handleMouseUp}

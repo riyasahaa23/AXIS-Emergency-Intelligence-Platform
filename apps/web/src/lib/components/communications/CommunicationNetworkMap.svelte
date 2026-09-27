@@ -55,6 +55,7 @@
   $: selectedNode = $communicationNodes.find((n) => n.id === $selectedCommunicationNodeId);
 </script>
 
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions a11y-no-noninteractive-tabindex -->
 <div
   on:mousedown={handleMouseDown}
   on:mousemove={handleMouseMove}
@@ -62,6 +63,7 @@
   class="relative flex-1 flex flex-col bg-[#020914] border border-white/10 rounded-2xl overflow-hidden select-none"
   role="region"
   aria-label="Communication Network Topology Map"
+  tabindex="0"
 >
   <!-- Top Map Header -->
   <div class="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-3 bg-gradient-to-b from-[#020914]/90 to-transparent pointer-events-none">
@@ -171,8 +173,11 @@
 
         <!-- Node Group -->
         <g
+          role="button"
+          tabindex="0"
           class="node-marker cursor-pointer"
           on:click={() => focusCommunicationNode(node.id)}
+          on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') focusCommunicationNode(node.id); }}
           transform="translate({p.x}, {p.y})"
         >
           <!-- Outer Ping Ring -->

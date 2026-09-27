@@ -35,6 +35,14 @@ let cachedProbeResult = false;
 const PROBE_CACHE_TTL_MS = 10_000; // Cache probe status for 10 seconds to avoid spamming
 
 /**
+ * Resets probe cache for test isolation.
+ */
+export function _resetProbeCache() {
+  lastProbeTime = 0;
+  cachedProbeResult = false;
+}
+
+/**
  * Probes the backend `/health` endpoint with a 1.2s timeout.
  * @param force Force a live network probe ignoring cache
  */

@@ -53,10 +53,11 @@
       <form on:submit|preventDefault={handleSubmit} class="py-4 space-y-3.5 text-xs font-mono">
         <!-- Team Selection -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="dt-team" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Select Field Unit
           </label>
           <select
+            id="dt-team"
             bind:value={selectedCode}
             class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#00E5FF]"
           >
@@ -70,10 +71,11 @@
 
         <!-- Target Destination -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="dt-dest" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Operational Destination / Sector
           </label>
           <input
+            id="dt-dest"
             type="text"
             bind:value={destination}
             required
@@ -83,10 +85,11 @@
 
         <!-- Mission Objective -->
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="dt-mission" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Mission Directives
           </label>
           <textarea
+            id="dt-mission"
             bind:value={mission}
             rows="3"
             required
@@ -97,10 +100,11 @@
         <!-- Vehicle Asset & Personnel Grid -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="dt-veh" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Assigned Vehicle
             </label>
             <input
+              id="dt-veh"
               type="text"
               bind:value={vehicle}
               class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#00E5FF]"
@@ -108,10 +112,11 @@
           </div>
 
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="dt-pers" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Personnel Count
             </label>
             <input
+              id="dt-pers"
               type="number"
               bind:value={personnel}
               min="1"

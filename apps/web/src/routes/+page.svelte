@@ -28,8 +28,52 @@
   import { activeNavSection } from '$stores/systemStore';
   import { onMount } from 'svelte';
 
+  const VALID_NAV_SECTIONS = ['global', 'incidents', 'analysis', 'scenarios', 'response', 'resources', 'comms', 'history'];
+
   onMount(() => {
     syncIncidentsFromBackend();
+
+    // Bidirectional URL deep-linking: Read initial section from hash or query params
+    const parseUrlSection = () => {
+      if (typeof window === 'undefined') return;
+      const hash = window.location.hash.replace(/^#/, '').toLowerCase().trim();
+      const params = new URLSearchParams(window.location.search);
+      const querySection = params.get('section')?.toLowerCase().trim() || params.get('tab')?.toLowerCase().trim();
+      const target = hash || querySection;
+
+      if (target) {
+        const normalized = target === 'communications' ? 'comms' : target;
+        if (VALID_NAV_SECTIONS.includes(normalized)) {
+          activeNavSection.set(normalized);
+        }
+      }
+    };
+
+    parseUrlSection();
+
+    const handleLocationChange = () => {
+      parseUrlSection();
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+
+    // Sync activeNavSection state changes to URL hash without full page reloading
+    const unsubscribe = activeNavSection.subscribe((section) => {
+      if (typeof window === 'undefined') return;
+      const currentHash = window.location.hash.replace(/^#/, '').toLowerCase().trim();
+      const expectedHash = section === 'global' ? '' : section;
+      if (currentHash !== expectedHash && !(currentHash === '' && section === 'global')) {
+        const newUrl = expectedHash ? `${window.location.pathname}#${expectedHash}` : window.location.pathname;
+        window.history.replaceState(null, '', newUrl);
+      }
+    });
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+      unsubscribe();
+    };
   });
 </script>
 

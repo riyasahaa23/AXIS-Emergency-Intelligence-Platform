@@ -117,6 +117,7 @@
   }
 </script>
 
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions a11y-no-noninteractive-tabindex -->
 <div
   bind:this={containerEl}
   on:mousedown={handleMouseDown}
@@ -124,6 +125,7 @@
   on:mouseup={handleMouseUp}
   role="region"
   aria-label="Geographic resource deployment map viewport"
+  tabindex="0"
   class="relative flex-1 flex flex-col bg-[#020914] border border-white/10 rounded-2xl overflow-hidden select-none transition-all duration-300 {
     isFullscreen ? 'fixed inset-4 z-50 shadow-2xl' : 'h-full min-h-[460px]'
   }"

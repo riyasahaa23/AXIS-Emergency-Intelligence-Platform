@@ -547,8 +547,9 @@
 
             <div class="space-y-2 text-[11px]">
               <div>
-                <label class="text-[#8BA1B8] block text-[10px] mb-1">Action Title</label>
+                <label for="ipm-action" class="text-[#8BA1B8] block text-[10px] mb-1">Action Title</label>
                 <input
+                  id="ipm-action"
                   type="text"
                   bind:value={editForm.action}
                   class="w-full p-2 rounded-lg bg-black/50 border border-white/10 text-white text-xs"
@@ -557,16 +558,18 @@
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label class="text-[#8BA1B8] block text-[10px] mb-1">Target Sector</label>
+                  <label for="ipm-sector" class="text-[#8BA1B8] block text-[10px] mb-1">Target Sector</label>
                   <input
+                    id="ipm-sector"
                     type="text"
                     bind:value={editForm.location}
                     class="w-full p-2 rounded-lg bg-black/50 border border-white/10 text-white text-xs"
                   />
                 </div>
                 <div>
-                  <label class="text-[#8BA1B8] block text-[10px] mb-1">Priority</label>
+                  <label for="ipm-pri" class="text-[#8BA1B8] block text-[10px] mb-1">Priority</label>
                   <select
+                    id="ipm-pri"
                     bind:value={editForm.priorityLabel}
                     class="w-full p-2 rounded-lg bg-[#061425] border border-white/10 text-white text-xs"
                   >
@@ -579,16 +582,18 @@
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label class="text-[#8BA1B8] block text-[10px] mb-1">Assigned Team</label>
+                  <label for="ipm-team" class="text-[#8BA1B8] block text-[10px] mb-1">Assigned Team</label>
                   <input
+                    id="ipm-team"
                     type="text"
                     bind:value={editForm.team}
                     class="w-full p-2 rounded-lg bg-black/50 border border-white/10 text-white text-xs"
                   />
                 </div>
                 <div>
-                  <label class="text-[#8BA1B8] block text-[10px] mb-1">ETA</label>
+                  <label for="ipm-eta" class="text-[#8BA1B8] block text-[10px] mb-1">ETA</label>
                   <input
+                    id="ipm-eta"
                     type="text"
                     bind:value={editForm.eta}
                     class="w-full p-2 rounded-lg bg-black/50 border border-white/10 text-white text-xs"

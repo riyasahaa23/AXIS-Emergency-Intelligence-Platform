@@ -968,9 +968,12 @@
   }
 </script>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y-no-static-element-interactions a11y-no-noninteractive-element-interactions a11y-no-noninteractive-tabindex -->
 <div
   bind:this={containerEl}
+  role="region"
+  aria-label="Geospatial Analysis Map"
+  tabindex="0"
   on:mousedown={handleMouseDown}
   on:mousemove={handleMouseMove}
   on:mouseup={handleMouseUp}

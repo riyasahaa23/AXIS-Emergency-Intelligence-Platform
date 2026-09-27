@@ -61,10 +61,11 @@
         <div class="space-y-3.5 text-xs">
           <!-- Severity Tier -->
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="eb-sev" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Alert Severity Level
             </label>
             <select
+              id="eb-sev"
               bind:value={severity}
               class="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-white focus:outline-none focus:border-red-500/50"
             >
@@ -76,10 +77,11 @@
 
           <!-- Target Sector -->
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="eb-sec" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Target Geographical Sector
             </label>
             <input
+              id="eb-sec"
               type="text"
               bind:value={targetSector}
               class="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-white focus:outline-none focus:border-red-500/50"
@@ -88,10 +90,11 @@
 
           <!-- Message Body -->
           <div>
-            <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+            <label for="eb-msg" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
               Broadcast Directive Message
             </label>
             <textarea
+              id="eb-msg"
               bind:value={broadcastText}
               rows="3"
               class="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-white focus:outline-none focus:border-red-500/50 resize-none font-sans"

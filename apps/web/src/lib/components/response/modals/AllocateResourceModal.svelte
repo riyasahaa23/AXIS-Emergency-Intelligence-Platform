@@ -48,10 +48,11 @@
       <!-- Form Inputs -->
       <form on:submit|preventDefault={handleSubmit} class="py-4 space-y-3.5 text-xs font-mono">
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="allocate-resource-select" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Target Resource
           </label>
           <select
+            id="allocate-resource-select"
             bind:value={selectedResId}
             class="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#00E5FF]"
           >
@@ -64,10 +65,11 @@
         </div>
 
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="allocate-quantity-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Quantity to Deploy
           </label>
           <input
+            id="allocate-quantity-input"
             type="number"
             bind:value={quantityDelta}
             min="1"
@@ -77,10 +79,11 @@
         </div>
 
         <div>
-          <label class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
+          <label for="allocate-depot-input" class="block text-[#8BA1B8] mb-1.5 uppercase tracking-wider text-[10px]">
             Destination Staging Base
           </label>
           <input
+            id="allocate-depot-input"
             type="text"
             bind:value={targetDepot}
             required
