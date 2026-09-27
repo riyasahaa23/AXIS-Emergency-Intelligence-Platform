@@ -39,6 +39,20 @@ def test_scenario_comparison(client):
     assert comparison.status_code == 200
     assert comparison.json()["score_delta"] > 0
 
+    live = client.get(f"/api/incidents/{incident['id']}").json()
+    assert live["severity"] == incident["severity"]
+    assert comparison.json()["baseline_version"] == incident["version"]
+    assert comparison.json()["projected_incident"]["severity"] == 90
+
+
+def test_scenario_comparison_is_deterministic(client):
+    incident = create_incident(client)
+    payload = {"name": "Evacuation", "severity_delta": -10, "population_delta": -1000}
+    first = client.post(f"/api/incidents/{incident['id']}/scenarios", json=payload)
+    second = client.post(f"/api/incidents/{incident['id']}/scenarios", json=payload)
+    assert first.status_code == second.status_code == 200
+    assert first.json() == second.json()
+
 
 def test_incident_timeline_and_optimistic_versioning(client):
     incident = create_incident(client)

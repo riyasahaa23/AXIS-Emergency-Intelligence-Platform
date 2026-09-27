@@ -13,7 +13,10 @@ class ScenarioRequest(BaseModel):
 
 class ScenarioComparison(BaseModel):
     scenario_name: str
+    baseline_version: int = Field(ge=1)
     baseline: RiskAssessment
     projected: RiskAssessment
+    projected_incident: dict
+    applied_changes: dict
     score_delta: float
     interpretation: str
