@@ -7,7 +7,8 @@ import type {
   ScenarioRiskAnalysis,
   ScenarioResponseNeedItem,
   SavedScenario,
-  ScenarioTimelineDay
+  ScenarioTimelineDay,
+  ScenarioPreset
 } from '$lib/types/scenario';
 
 export interface HazardScenarioDefinition {
@@ -22,6 +23,7 @@ export interface HazardScenarioDefinition {
   factors: ScenarioFactorConfig[];
   availableExtraFactors: ScenarioParameterConfig[];
   baseMetrics: ScenarioMetricSet;
+  presets: ScenarioPreset[];
 }
 
 export const HAZARD_SCENARIO_CONFIGS: Record<string, HazardScenarioDefinition> = {
@@ -148,7 +150,41 @@ export const HAZARD_SCENARIO_CONFIGS: Record<string, HazardScenarioDefinition> =
       bridgesAffected: 6,
       riskLevel: 'CRITICAL',
       riskScore: 84
-    }
+    },
+    presets: [
+      {
+        id: 'fl-normal',
+        label: 'NORMAL',
+        description: 'Baseline monsoon precipitation with standard river discharge',
+        hazardType: 'flood',
+        parameters: { rainfallIncrease: 20, riverDischarge: 20, durationDays: 7, seaLevelRise: 0.2 },
+        factors: { upstreamDamRelease: false, drainageFailure: false, populationMovement: false }
+      },
+      {
+        id: 'fl-heavy',
+        label: 'HEAVY RAIN',
+        description: 'Sustained monsoon rain (+35%) and elevated river swelling',
+        hazardType: 'flood',
+        parameters: { rainfallIncrease: 35, riverDischarge: 35, durationDays: 14, seaLevelRise: 0.5 },
+        factors: { upstreamDamRelease: false, drainageFailure: true, populationMovement: false }
+      },
+      {
+        id: 'fl-extreme',
+        label: 'EXTREME RAINFALL',
+        description: 'Heavy precipitation (+65%) with upstream dam release and drainage failure',
+        hazardType: 'flood',
+        parameters: { rainfallIncrease: 65, riverDischarge: 55, durationDays: 21, seaLevelRise: 0.9 },
+        factors: { upstreamDamRelease: true, drainageFailure: true, populationMovement: true }
+      },
+      {
+        id: 'fl-catastrophic',
+        label: 'CATASTROPHIC FLOOD',
+        description: 'Worst-case 100-year monsoon inundation crest with total polder breach',
+        hazardType: 'flood',
+        parameters: { rainfallIncrease: 100, riverDischarge: 80, durationDays: 30, seaLevelRise: 1.8 },
+        factors: { upstreamDamRelease: true, drainageFailure: true, populationMovement: true }
+      }
+    ]
   },
 
   cyclone: {
@@ -263,7 +299,41 @@ export const HAZARD_SCENARIO_CONFIGS: Record<string, HazardScenarioDefinition> =
       bridgesAffected: 4,
       riskLevel: 'HIGH',
       riskScore: 78
-    }
+    },
+    presets: [
+      {
+        id: 'cy-baseline',
+        label: 'BASELINE',
+        description: 'Category 2 tropical storm maintaining current offshore trajectory',
+        hazardType: 'cyclone',
+        parameters: { windSpeed: 10, trackShift: 0, intensityCat: 2, durationHours: 18 },
+        factors: { highTideAlignment: false, slowForwardSpeed: false, rapidIntensification: false }
+      },
+      {
+        id: 'cy-intensify',
+        label: 'INTENSIFY',
+        description: 'Rapid intensification over warm eddy to Category 4 gale force',
+        hazardType: 'cyclone',
+        parameters: { windSpeed: 25, trackShift: 50, intensityCat: 4, durationHours: 24 },
+        factors: { highTideAlignment: false, slowForwardSpeed: false, rapidIntensification: true }
+      },
+      {
+        id: 'cy-shift',
+        label: 'TRACK SHIFT',
+        description: 'Deflection of landfall corridor towards densely populated industrial estuary',
+        hazardType: 'cyclone',
+        parameters: { windSpeed: 20, trackShift: 125, intensityCat: 3, durationHours: 36 },
+        factors: { highTideAlignment: true, slowForwardSpeed: false, rapidIntensification: false }
+      },
+      {
+        id: 'cy-extreme',
+        label: 'EXTREME LANDFALL',
+        description: 'Category 5 monster surge coinciding with spring astronomical high tide',
+        hazardType: 'cyclone',
+        parameters: { windSpeed: 45, trackShift: 100, intensityCat: 5, durationHours: 48 },
+        factors: { highTideAlignment: true, slowForwardSpeed: true, rapidIntensification: true }
+      }
+    ]
   },
 
   wildfire: {
@@ -378,61 +448,95 @@ export const HAZARD_SCENARIO_CONFIGS: Record<string, HazardScenarioDefinition> =
       bridgesAffected: 2,
       riskLevel: 'HIGH',
       riskScore: 74
-    }
+    },
+    presets: [
+      {
+        id: 'wf-baseline',
+        label: 'BASELINE',
+        description: 'Moderate ground fire advancing along natural containment ridges',
+        hazardType: 'wildfire',
+        parameters: { windSpeed: 15, fuelHumidity: -10, durationDays: 3, containmentLoss: -10 },
+        factors: { crownFireTransition: false, spotFireGeneration: false, structuralDefenseFailure: false }
+      },
+      {
+        id: 'wf-wind',
+        label: 'HIGH WIND',
+        description: 'Gusting winds pushing flames into dense unburned pine stands',
+        hazardType: 'wildfire',
+        parameters: { windSpeed: 45, fuelHumidity: -20, durationDays: 5, containmentLoss: -25 },
+        factors: { crownFireTransition: true, spotFireGeneration: false, structuralDefenseFailure: false }
+      },
+      {
+        id: 'wf-humidity',
+        label: 'LOW HUMIDITY',
+        description: 'Critically dry atmospheric condition driving extreme fuel flammability',
+        hazardType: 'wildfire',
+        parameters: { windSpeed: 30, fuelHumidity: -40, durationDays: 7, containmentLoss: -30 },
+        factors: { crownFireTransition: true, spotFireGeneration: true, structuralDefenseFailure: false }
+      },
+      {
+        id: 'wf-spread',
+        label: 'RAPID SPREAD',
+        description: 'Pyroconvective column collapse sparking multiple fires across urban interface',
+        hazardType: 'wildfire',
+        parameters: { windSpeed: 60, fuelHumidity: -45, durationDays: 10, containmentLoss: -50 },
+        factors: { crownFireTransition: true, spotFireGeneration: true, structuralDefenseFailure: true }
+      }
+    ]
   },
 
   earthquake: {
     hazardType: 'earthquake',
     name: 'Noto Peninsula Seismic Rupture Escalation',
-    incidentId: 'inc-06',
+    incidentId: 'inc-04',
     incidentName: 'Noto Peninsula Seismic Swarm',
     country: 'Japan',
     location: 'Ishikawa Prefecture',
     severity: 'moderate',
     parameters: [
       {
-        id: 'magnitudeDelta',
+        id: 'magnitude',
         label: 'MAGNITUDE',
-        unit: 'Mw',
-        min: 0.1,
-        max: 1.2,
+        unit: 'M',
+        min: 5.0,
+        max: 8.5,
         step: 0.1,
-        defaultValue: 0.5,
+        defaultValue: 6.8,
         icon: 'activity',
-        description: 'Moment magnitude escalation of secondary fault rupture'
-      },
-      {
-        id: 'depthShift',
-        label: 'DEPTH',
-        unit: 'km',
-        min: -25,
-        max: 0,
-        step: 5,
-        defaultValue: -10,
-        icon: 'arrow-down',
-        description: 'Shallower hypocenter sharply raises peak ground acceleration'
+        description: 'Moment magnitude scale of primary crustal rupture'
       },
       {
         id: 'aftershockRate',
-        label: 'AFTERSHOCK ACTIVITY',
+        label: 'AFTERSHOCK PROBABILITY',
         unit: '%',
         min: 10,
-        max: 80,
+        max: 90,
         step: 5,
-        defaultValue: 30,
+        defaultValue: 20,
         icon: 'zap',
-        description: 'Elevated frequency of M5.0+ damaging secondary jolts'
+        description: 'Probability of significant secondary seismic ruptures (>M5.0)'
       },
       {
         id: 'infraVulnerability',
-        label: 'INFRASTRUCTURE VULNERABILITY',
+        label: 'INFRASTRUCTURE DEGRADATION',
         unit: '%',
         min: 5,
-        max: 40,
+        max: 60,
         step: 5,
         defaultValue: 15,
         icon: 'home',
-        description: 'Pre-existing structural fatigue in aged wooden housing'
+        description: 'Structural failure percentage across older residential and masonry assets'
+      },
+      {
+        id: 'roadAccessibility',
+        label: 'ROAD ACCESSIBILITY',
+        unit: '%',
+        min: 10,
+        max: 90,
+        step: 5,
+        defaultValue: 70,
+        icon: 'truck',
+        description: 'Percentage of arterial mountain and coastal road network passable'
       }
     ],
     factors: [
@@ -481,8 +585,42 @@ export const HAZARD_SCENARIO_CONFIGS: Record<string, HazardScenarioDefinition> =
       healthFacilities: 7,
       bridgesAffected: 3,
       riskLevel: 'MODERATE',
-      riskScore: 71
-    }
+      riskScore: 64
+    },
+    presets: [
+      {
+        id: 'eq-baseline',
+        label: 'BASELINE',
+        description: 'Current M6.2 seismic swarm status with moderate shaking',
+        hazardType: 'earthquake',
+        parameters: { magnitude: 6.2, aftershockRate: 15, infraVulnerability: 10, roadAccessibility: 80 },
+        factors: { tsunamiAdvisory: false, bridgeRupture: false, pipelineRupture: false }
+      },
+      {
+        id: 'eq-aftershock',
+        label: 'STRONG AFTERSHOCK',
+        description: 'Escalation to M6.8 rupture with elevated secondary shocks',
+        hazardType: 'earthquake',
+        parameters: { magnitude: 6.8, aftershockRate: 35, infraVulnerability: 20, roadAccessibility: 65 },
+        factors: { tsunamiAdvisory: false, bridgeRupture: true, pipelineRupture: false }
+      },
+      {
+        id: 'eq-cascade',
+        label: 'INFRASTRUCTURE CASCADE',
+        description: 'Major M7.3 quake with bridge pier dislocation and gas leaks',
+        hazardType: 'earthquake',
+        parameters: { magnitude: 7.3, aftershockRate: 55, infraVulnerability: 35, roadAccessibility: 45 },
+        factors: { tsunamiAdvisory: false, bridgeRupture: true, pipelineRupture: true }
+      },
+      {
+        id: 'eq-access',
+        label: 'MAJOR ACCESS FAILURE',
+        description: 'Severe M7.8 rupture triggering coastal landslides and localized tsunami',
+        hazardType: 'earthquake',
+        parameters: { magnitude: 7.8, aftershockRate: 75, infraVulnerability: 50, roadAccessibility: 25 },
+        factors: { tsunamiAdvisory: true, bridgeRupture: true, pipelineRupture: true }
+      }
+    ]
   },
 
   multi_hazard: {
@@ -586,7 +724,41 @@ export const HAZARD_SCENARIO_CONFIGS: Record<string, HazardScenarioDefinition> =
       bridgesAffected: 9,
       riskLevel: 'CRITICAL',
       riskScore: 92
-    }
+    },
+    presets: [
+      {
+        id: 'mh-baseline',
+        label: 'BASELINE',
+        description: 'Normal concurrent flood and storm weather patterns',
+        hazardType: 'multi_hazard',
+        parameters: { cascadeCoupling: 1.0, compoundDuration: 14, gridFailure: 20, landslideRisk: 25 },
+        factors: { evacuationCorridorBlocked: false, communicationBlackout: false, hospitalOvercapacity: false }
+      },
+      {
+        id: 'mh-surge',
+        label: 'COMPOUND SURGE',
+        description: 'Tidal surge locking drainage channels while rain continues inland',
+        hazardType: 'multi_hazard',
+        parameters: { cascadeCoupling: 1.8, compoundDuration: 21, gridFailure: 35, landslideRisk: 45 },
+        factors: { evacuationCorridorBlocked: true, communicationBlackout: false, hospitalOvercapacity: false }
+      },
+      {
+        id: 'mh-cascade',
+        label: 'CASCADING FAILURE',
+        description: 'Grid collapse disabling water pumping stations and communications',
+        hazardType: 'multi_hazard',
+        parameters: { cascadeCoupling: 2.2, compoundDuration: 28, gridFailure: 55, landslideRisk: 60 },
+        factors: { evacuationCorridorBlocked: true, communicationBlackout: true, hospitalOvercapacity: false }
+      },
+      {
+        id: 'mh-max',
+        label: 'MAXIMUM STRESS',
+        description: 'Simultaneous catastrophic storm, flood surge, and regional blackout',
+        hazardType: 'multi_hazard',
+        parameters: { cascadeCoupling: 3.0, compoundDuration: 35, gridFailure: 80, landslideRisk: 80 },
+        factors: { evacuationCorridorBlocked: true, communicationBlackout: true, hospitalOvercapacity: true }
+      }
+    ]
   }
 };
 

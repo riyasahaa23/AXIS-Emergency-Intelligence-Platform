@@ -11,7 +11,7 @@
   let copied = false;
 
   $: exportPayload = {
-    system: 'JARVIS Planetary Emergency Intelligence v2.4',
+    system: 'AXIS Planetary Emergency Intelligence v2.4',
     timestamp: new Date().toISOString(),
     hazardType: $currentHazardConfig.hazardType,
     incidentName: $currentHazardConfig.incidentName,
@@ -39,7 +39,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `jarvis_scenario_${$currentHazardConfig.hazardType}_day${$simulationTimelineDay}.json`;
+    a.download = `axis_scenario_${$currentHazardConfig.hazardType}_day${$simulationTimelineDay}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }

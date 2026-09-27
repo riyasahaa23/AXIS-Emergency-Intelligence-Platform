@@ -12,7 +12,7 @@ const INITIAL_AUDIT_EVENTS: HistoryAuditEvent[] = [
     id: 'evt-09',
     timestamp: '14:32:18 UTC',
     category: 'system',
-    actor: 'JARVIS-CORE',
+    actor: 'AXIS-CORE',
     action: 'Telemetry Heartbeat Validated',
     target: 'Global Spacecraft Sensor Array',
     result: 'All 8 telemetry links nominal',

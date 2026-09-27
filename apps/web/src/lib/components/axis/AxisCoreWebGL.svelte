@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import * as THREE from 'three';
-  import { jarvisState } from '../../stores/commandStore';
-  import { masterHeartbeat } from '../../three/jarvisHeartbeat';
+  import { axisState } from '../../stores/commandStore';
+  import { masterHeartbeat } from '../../three/axisHeartbeat';
 
   export let size: 'sm' | 'md' | 'lg' = 'lg';
   export let interactive: boolean = true;
@@ -60,10 +60,10 @@
   let clock = new THREE.Clock();
 
   // State-driven multipliers
-  $: isBusy = $jarvisState === 'THINKING' || $jarvisState === 'ANALYSING';
-  $: isListening = $jarvisState === 'LISTENING';
-  $: isSimulating = $jarvisState === 'SIMULATING';
-  $: isResponding = $jarvisState === 'RESPONDING';
+  $: isBusy = $axisState === 'THINKING' || $axisState === 'ANALYSING';
+  $: isListening = $axisState === 'LISTENING';
+  $: isSimulating = $axisState === 'SIMULATING';
+  $: isResponding = $axisState === 'RESPONDING';
 
   $: speedMultiplier = isBusy ? 2.5 : isListening ? 1.3 : isSimulating ? 2.0 : isResponding ? 1.6 : 1.0;
 
@@ -595,7 +595,7 @@
     const elapsedTime = clock.getElapsedTime();
 
     // 1. Advance Master Heartbeat
-    const hb = masterHeartbeat.update(delta, $jarvisState);
+    const hb = masterHeartbeat.update(delta, $axisState);
 
     // 2. Activation sequence progression
     if (activationProgress < 1.0) {

@@ -11,7 +11,7 @@ export type PipelineStage =
   | 'VERIFYING RESULT'
   | 'COMPLETE';
 
-export type JarvisActivityState = 
+export type AxisActivityState = 
   | 'IDLE' 
   | 'LISTENING' 
   | 'THINKING' 
@@ -19,34 +19,46 @@ export type JarvisActivityState =
   | 'SIMULATING' 
   | 'RESPONDING';
 
+// Backward compatibility alias
+export type JarvisActivityState = AxisActivityState;
+
 export const currentCommand = writable<string>('');
 export const isProcessingCommand = writable<boolean>(false);
 export const activeStage = writable<PipelineStage>('IDLE');
 export const stageProgress = writable<number>(0);
 
-// Central JARVIS Mode states
-export const isJarvisCentralActive = writable<boolean>(false);
-export const jarvisState = writable<JarvisActivityState>('IDLE');
-export const jarvisResponseText = writable<string>('');
+// Central AXIS Mode states
+export const isAxisCentralActive = writable<boolean>(false);
+export const axisState = writable<AxisActivityState>('IDLE');
+export const axisResponseText = writable<string>('');
 
-export function openJarvisCentral(initialState: JarvisActivityState = 'IDLE') {
-  isJarvisCentralActive.set(true);
-  jarvisState.set(initialState);
+// Backward compatibility store aliases
+export const isJarvisCentralActive = isAxisCentralActive;
+export const jarvisState = axisState;
+export const jarvisResponseText = axisResponseText;
+
+export function openAxisCentral(initialState: AxisActivityState = 'IDLE') {
+  isAxisCentralActive.set(true);
+  axisState.set(initialState);
 }
 
-export function closeJarvisCentral() {
-  isJarvisCentralActive.set(false);
-  jarvisState.set('IDLE');
+export function closeAxisCentral() {
+  isAxisCentralActive.set(false);
+  axisState.set('IDLE');
 }
 
-const STAGES: { stage: PipelineStage; jarvis: JarvisActivityState; delay: number }[] = [
-  { stage: 'UNDERSTANDING REQUEST', jarvis: 'LISTENING', delay: 400 },
-  { stage: 'IDENTIFYING LOCATION', jarvis: 'THINKING', delay: 450 },
-  { stage: 'LOADING INCIDENT STATE', jarvis: 'ANALYSING', delay: 500 },
-  { stage: 'RUNNING ANALYSIS', jarvis: 'ANALYSING', delay: 550 },
-  { stage: 'CALCULATING IMPACT', jarvis: 'SIMULATING', delay: 600 },
-  { stage: 'VERIFYING RESULT', jarvis: 'SIMULATING', delay: 450 },
-  { stage: 'COMPLETE', jarvis: 'RESPONDING', delay: 500 }
+// Backward compatibility function aliases
+export const openJarvisCentral = openAxisCentral;
+export const closeJarvisCentral = closeAxisCentral;
+
+const STAGES: { stage: PipelineStage; axis: AxisActivityState; delay: number }[] = [
+  { stage: 'UNDERSTANDING REQUEST', axis: 'LISTENING', delay: 400 },
+  { stage: 'IDENTIFYING LOCATION', axis: 'THINKING', delay: 450 },
+  { stage: 'LOADING INCIDENT STATE', axis: 'ANALYSING', delay: 500 },
+  { stage: 'RUNNING ANALYSIS', axis: 'ANALYSING', delay: 550 },
+  { stage: 'CALCULATING IMPACT', axis: 'SIMULATING', delay: 600 },
+  { stage: 'VERIFYING RESULT', axis: 'SIMULATING', delay: 450 },
+  { stage: 'COMPLETE', axis: 'RESPONDING', delay: 500 }
 ];
 
 export async function submitCommand(promptText: string) {
@@ -56,11 +68,11 @@ export async function submitCommand(promptText: string) {
 
   const lower = promptText.toLowerCase();
 
-  // If central mode is open, sync JARVIS state
+  // If central mode is open, sync AXIS state
   for (let i = 0; i < STAGES.length; i++) {
     const item = STAGES[i];
     activeStage.set(item.stage);
-    jarvisState.set(item.jarvis);
+    axisState.set(item.axis);
     stageProgress.set(Math.round(((i + 1) / STAGES.length) * 100));
 
     // When identifying location, smoothly transition Earth camera
@@ -81,7 +93,7 @@ export async function submitCommand(promptText: string) {
     await new Promise((r) => setTimeout(r, item.delay));
   }
 
-  jarvisResponseText.set(`Analysis complete for: "${promptText}". Multi-signal risk fusion verified. Geospatial impact propagation projected.`);
+  axisResponseText.set(`Analysis complete for: "${promptText}". Multi-signal risk fusion verified. Geospatial impact propagation projected.`);
 
   setTimeout(() => {
     isProcessingCommand.set(false);

@@ -25,7 +25,7 @@
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]"></span>
               <h2 class="text-base font-bold font-mono text-white tracking-wider">
-                JARVIS AUTO-OPTIMIZE ENGINE
+                AXIS AUTO-OPTIMIZE ENGINE
               </h2>
             </div>
             <p class="text-xs text-[#8BA1B8] font-sans">

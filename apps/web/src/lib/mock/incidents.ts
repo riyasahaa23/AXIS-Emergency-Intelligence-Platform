@@ -781,4 +781,6 @@ export const MOCK_INCIDENTS: HazardIncident[] = [
   }
 ];
 
+export const INCIDENTS = MOCK_INCIDENTS;
+
 

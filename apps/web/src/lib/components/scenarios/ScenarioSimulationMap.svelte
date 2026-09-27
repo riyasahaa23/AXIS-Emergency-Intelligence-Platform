@@ -411,40 +411,80 @@
 
   // 4. EARTHQUAKE SIMULATION
   function renderEarthquakeSimulation(ctx: CanvasRenderingContext2D, expansion: number, phase: number) {
-    const ex = 0;
-    const ey = -10;
+    const mag = $scenarioParameters.magnitude || 6.8;
+    const aftershocks = $scenarioParameters.aftershockRate || 45;
+    const roadAccess = $scenarioParameters.roadAccessibility || 65;
+    const ex = 20;
+    const ey = -40;
 
-    // Noto Peninsula coastline
+    // Noto Peninsula (Ishikawa Prefecture) terrain landmass polygon
+    const notoPoints = [
+      { x: -160, y: 150 }, // Kanazawa South
+      { x: -130, y: 70 },  // Hakui
+      { x: -80, y: 0 },    // Nanao Bay
+      { x: -60, y: -70 },  // Anamizu
+      { x: -10, y: -130 }, // Wajima Outer Coast
+      { x: 50, y: -140 },  // Suzu Cape Rokko
+      { x: 90, y: -90 },   // Suzu Bay
+      { x: 70, y: -20 },   // Noto Town
+      { x: 30, y: 40 },    // Toyama Bay
+      { x: -10, y: 110 },  // Takaoka / Toyama
+      { x: -100, y: 170 }  // Ishikawa boundary
+    ];
+
+    // Landmass fill
     ctx.beginPath();
-    ctx.moveTo(-180, 80);
-    ctx.bezierCurveTo(-90, 40, -40, -80, 0, -120);
-    ctx.bezierCurveTo(40, -80, 90, -30, 180, 40);
+    notoPoints.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.fillStyle = '#0a192f';
+    ctx.fill();
     ctx.strokeStyle = 'rgba(234, 179, 8, 0.4)';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Fault line
+    // Fault line along offshore Noto shelf
     ctx.beginPath();
-    ctx.moveTo(-90, -70);
-    ctx.lineTo(80, 20);
-    ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
-    ctx.lineWidth = 3;
+    ctx.moveTo(-50, -150);
+    ctx.bezierCurveTo(10, -155, 60, -120, 110, -80);
+    ctx.strokeStyle = 'rgba(239, 68, 68, 0.85)';
+    ctx.lineWidth = 2.5;
     ctx.setLineDash([6, 3]);
     ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Seismic Waves propagating outwards
-    for (let i = 1; i <= 4; i++) {
-      const radius = (i * 35 * expansion + (phase * 30) % 60);
+    // Highway 249 & Noto Satoyama Kaido road network
+    ctx.beginPath();
+    ctx.moveTo(-140, 120);
+    ctx.lineTo(-80, 0);
+    ctx.lineTo(-60, -70);
+    ctx.lineTo(-10, -130);
+    ctx.lineTo(50, -140);
+    ctx.strokeStyle = roadAccess < 40 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(0, 229, 255, 0.5)';
+    ctx.lineWidth = 2;
+    if (roadAccess < 40) ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Seismic Waves propagating outwards from offshore epicenter
+    const waveCount = Math.round(3 + (mag - 5.0) * 1.5);
+    for (let i = 1; i <= waveCount; i++) {
+      const radius = (i * 28 * expansion * (mag / 6.0) + (phase * 25) % 45);
       ctx.beginPath();
       ctx.arc(ex, ey, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = i === 1 ? 'rgba(239, 68, 68, 0.7)' : 'rgba(168, 85, 247, 0.4)';
-      ctx.lineWidth = Math.max(3.5 - i * 0.7, 1);
+      ctx.strokeStyle = i <= 2 ? 'rgba(239, 68, 68, 0.75)' : 'rgba(168, 85, 247, 0.45)';
+      ctx.lineWidth = Math.max(3.2 - i * 0.5, 1);
       ctx.stroke();
     }
 
-    drawPulsingBeacon(ctx, ex, ey, '#EF4444', phase, 'M7.8 EPICENTER');
-    drawCityMarker(ctx, 40, -100, 'Wajima Port');
-    drawCityMarker(ctx, -50, -30, 'Suzu Evac Center');
+    // Epicenter Beacon with dynamic magnitude
+    drawPulsingBeacon(ctx, ex, ey, '#EF4444', phase, `M${mag.toFixed(1)} EPICENTER`);
+
+    // Key Cities & Ports
+    drawCityMarker(ctx, 45, -125, 'Suzu (Intense Shaking)');
+    drawCityMarker(ctx, -15, -115, 'Wajima Port (Tsunami/Fire Risk)');
+    drawCityMarker(ctx, -55, -55, 'Anamizu Staging Area');
+    drawCityMarker(ctx, -75, 10, 'Nanao Evac Hub');
+    drawCityMarker(ctx, -145, 130, 'Kanazawa Logistics Base');
   }
 
   // 5. MULTI-HAZARD SIMULATION
@@ -544,7 +584,7 @@
           {:else if $selectedScenarioHazard === 'wildfire'}
             SCENARIO: +{$scenarioParameters.windSpeed || 20}KM/H WIND
           {:else if $selectedScenarioHazard === 'earthquake'}
-            SCENARIO: +{$scenarioParameters.magnitudeDelta || 0.5}M SEISMIC
+            SCENARIO: {$scenarioParameters.magnitude || 6.8}M // {$scenarioParameters.aftershockRate || 45}% AFTERSHOCK
           {:else}
             SCENARIO: {$scenarioParameters.cascadeCoupling || 1.8}X CASCADE
           {/if}

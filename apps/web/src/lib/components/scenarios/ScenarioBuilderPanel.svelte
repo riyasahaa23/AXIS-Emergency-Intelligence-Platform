@@ -12,12 +12,20 @@
     runScenarioSimulation,
     isSimulating,
     simulationStage,
-    simulationProgressPct
+    simulationProgressPct,
+    activeScenarioName,
+    activeScenarioPresetId,
+    applyScenarioPreset,
+    scenarioSimulationResult
   } from '$lib/stores/scenarioStore';
   import { selectedIncident, incidents, selectIncident } from '$lib/stores/incidentStore';
 
   let isIncidentPickerOpen = false;
   let isAddFactorOpen = false;
+
+  $: baselineRisk = $currentHazardConfig?.baseMetrics?.riskScore ?? 64;
+  $: scenarioRisk = $scenarioSimulationResult?.simulatedMetrics?.riskScore ?? baselineRisk;
+  $: riskDelta = scenarioRisk - baselineRisk;
 
   function handleSliderChange(id: string, e: Event) {
     const target = e.target as HTMLInputElement;
@@ -55,6 +63,17 @@
       </svg>
       <span>Reset</span>
     </button>
+  </div>
+
+  <!-- Editable Scenario Name Input -->
+  <div class="mb-3 shrink-0">
+    <div class="text-[9px] uppercase tracking-wider text-[#8BA1B8] mb-1">SCENARIO TITLE</div>
+    <input
+      type="text"
+      bind:value={$activeScenarioName}
+      class="w-full px-2.5 py-1.5 rounded-lg bg-[#061425] border border-white/15 focus:border-[#00E5FF] focus:outline-none text-xs text-white placeholder-white/40"
+      placeholder="Enter scenario name..."
+    />
   </div>
 
   <!-- 1. Base Incident Card -->
@@ -135,6 +154,68 @@
         {/each}
       </div>
     {/if}
+  </div>
+
+  <!-- Presets Selector Bar -->
+  {#if $currentHazardConfig.presets && $currentHazardConfig.presets.length > 0}
+    <div class="mb-4 shrink-0">
+      <div class="flex items-center justify-between text-[10px] uppercase tracking-wider text-[#8BA1B8] mb-1.5">
+        <span>HAZARD PRESETS</span>
+        <span class="text-[9px] text-[#00E5FF]">ONE-CLICK CALIBRATION</span>
+      </div>
+      <div class="grid grid-cols-2 gap-1.5">
+        {#each $currentHazardConfig.presets as preset}
+          <button
+            type="button"
+            on:click={() => applyScenarioPreset(preset.id)}
+            class="flex flex-col p-2 rounded-lg border text-left transition-all cursor-pointer {
+              $activeScenarioPresetId === preset.id
+                ? 'bg-[#8B5CF6]/20 border-[#00E5FF] text-white shadow-[0_0_12px_rgba(0,229,255,0.25)]'
+                : 'bg-[#061425]/60 border-white/10 text-[#8BA1B8] hover:border-white/30 hover:text-white'
+            }"
+          >
+            <span class="text-[10px] font-bold uppercase truncate tracking-wide flex items-center gap-1">
+              {#if $activeScenarioPresetId === preset.id}
+                <span class="w-1.5 h-1.5 rounded-full bg-[#00E5FF] animate-pulse"></span>
+              {/if}
+              {preset.label}
+            </span>
+            <span class="text-[8px] text-[#8BA1B8]/80 line-clamp-1 mt-0.5">{preset.description}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
+  <!-- Simulated Risk Delta Box -->
+  <div class="mb-4 p-3 rounded-xl bg-gradient-to-br from-[#061425] to-[#0A1A2F] border border-white/10 shrink-0">
+    <div class="flex items-center justify-between text-[10px] uppercase tracking-wider text-[#8BA1B8] mb-2">
+      <span>SIMULATED RISK DELTA</span>
+      <span class="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase {
+        riskDelta > 15 ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
+        riskDelta > 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
+        'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+      }">
+        {riskDelta > 0 ? `+${riskDelta}` : riskDelta} PTS
+      </span>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mb-2">
+      <div class="p-2 rounded-lg bg-black/40 border border-white/5">
+        <div class="text-[9px] uppercase text-[#8BA1B8]">Baseline Risk</div>
+        <div class="text-base font-bold text-white mt-0.5">{baselineRisk} <span class="text-[10px] font-normal text-[#8BA1B8]">/ 100</span></div>
+      </div>
+      <div class="p-2 rounded-lg bg-[#8B5CF6]/10 border border-[#8B5CF6]/30">
+        <div class="text-[9px] uppercase text-[#C084FC]">Projected Risk</div>
+        <div class="text-base font-bold text-[#00E5FF] mt-0.5">{scenarioRisk} <span class="text-[10px] font-normal text-[#8BA1B8]">/ 100</span></div>
+      </div>
+    </div>
+    <!-- Visual Delta Bar -->
+    <div class="w-full h-1.5 bg-[#0F2238] rounded-full overflow-hidden flex">
+      <div class="h-full bg-slate-500" style="width: {baselineRisk}%"></div>
+      {#if riskDelta > 0}
+        <div class="h-full bg-[#EF4444] animate-pulse" style="width: {Math.min(riskDelta, 100 - baselineRisk)}%"></div>
+      {/if}
+    </div>
   </div>
 
   <!-- 2. Scenario Parameters (Sliders) -->

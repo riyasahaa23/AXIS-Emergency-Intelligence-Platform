@@ -11,7 +11,7 @@
   let copied = false;
 
   function copySummary() {
-    const text = `JARVIS EMERGENCY SCENARIO INTELLIGENCE REPORT
+    const text = `AXIS EMERGENCY SCENARIO INTELLIGENCE REPORT
 Hazard: ${$currentHazardConfig.hazardType.toUpperCase()} (${$currentHazardConfig.incidentName})
 Location: ${$currentHazardConfig.country} - ${$currentHazardConfig.location}
 Timeline Horizon: Day ${$simulationTimelineDay}

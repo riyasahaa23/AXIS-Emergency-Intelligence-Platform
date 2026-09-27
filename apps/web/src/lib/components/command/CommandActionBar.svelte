@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { openJarvisCentral, submitCommand } from '../../stores/commandStore';
+  import { openAxisCentral, submitCommand } from '../../stores/commandStore';
   import { openScenarioDrawer, openIncidentPlanModal, openUploadDataModal } from '../../stores/systemStore';
 
   function onAskAnything() {
-    openJarvisCentral('LISTENING');
+    openAxisCentral('LISTENING');
   }
 
   function onAction(action: string) {
@@ -16,7 +16,7 @@
   <button
     on:click={onAskAnything}
     class="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#3D7CFF] via-[#00E5FF] to-[#8B5CFF] text-[#020711] font-mono font-bold text-xs shadow-[0_0_25px_rgba(0,229,255,0.45)] hover:shadow-[0_0_35px_rgba(0,229,255,0.7)] hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-    title="Activate Central JARVIS Intelligence"
+    title="Activate Central AXIS Intelligence"
   >
     <div class="flex items-center justify-center w-5 h-5 rounded-full bg-[#020711]/20">
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

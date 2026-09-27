@@ -83,6 +83,15 @@ export interface ScenarioResponseNeedItem {
   change: string;
 }
 
+export interface ScenarioPreset {
+  id: string;
+  label: string;
+  description: string;
+  hazardType: string;
+  parameters: Record<string, number>;
+  factors: Record<string, boolean>;
+}
+
 export interface SavedScenario {
   id: string;
   name: string;
@@ -94,4 +103,23 @@ export interface SavedScenario {
   createdAt: string;
   status: 'Ready' | 'Simulated' | 'Draft';
   summary: string;
+  baselineRisk?: number;
+  scenarioRisk?: number;
+  riskDelta?: number;
+  isSimulated?: boolean;
+}
+
+export interface SimulatedScenarioResponseContext {
+  scenarioId: string;
+  scenarioName: string;
+  incidentId: string;
+  incidentName: string;
+  hazardType: string;
+  riskScore: number;
+  riskDelta: number;
+  affectedPopulation: string;
+  infrastructureImpact: string;
+  requiredTeamsCount: number;
+  requiredSheltersCount: number;
+  appliedAt: string;
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { incidents, selectedIncidentId, selectIncident } from '../../stores/incidentStore';
   import { telemetry, isRightPanelCollapsed, activeNavSection, openScenarioDrawer } from '../../stores/systemStore';
-  import { submitCommand, isJarvisCentralActive } from '../../stores/commandStore';
+  import { submitCommand, isAxisCentralActive } from '../../stores/commandStore';
   import { runAnalysisPipeline } from '../../stores/analysisStore';
   import {
     scenarioSimulationResult,
@@ -59,7 +59,7 @@
   </div>
 {:else}
   <!-- Full Expanded Sleek Operational Context Panel Matching Reference -->
-  <aside class="relative z-30 flex flex-col w-[350px] h-full overflow-y-auto px-4 py-4 bg-[#020711]/70 backdrop-blur-2xl border-l border-white/10 select-none custom-scrollbar transition-all duration-700 {$isJarvisCentralActive ? 'opacity-40 hover:opacity-100 filter brightness-90' : 'opacity-100'}">
+  <aside class="relative z-30 flex flex-col w-[350px] h-full overflow-y-auto px-4 py-4 bg-[#020711]/70 backdrop-blur-2xl border-l border-white/10 select-none custom-scrollbar transition-all duration-700 {$isAxisCentralActive ? 'opacity-40 hover:opacity-100 filter brightness-90' : 'opacity-100'}">
     
     <!-- Top Header & Collapse Button -->
     <div class="flex items-center justify-between pb-2 mb-3 border-b border-white/10">

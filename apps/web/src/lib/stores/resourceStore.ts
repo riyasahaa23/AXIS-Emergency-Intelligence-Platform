@@ -156,7 +156,7 @@ export const resourceAuditLog = writable<ResourceActivityEntry[]>([
     timestamp: '14:22 UTC',
     action: 'Shelter capacity updated',
     target: 'National Relief Center',
-    operator: 'JARVIS-LOGISTICS',
+    operator: 'AXIS-LOGISTICS',
     severity: 'info'
   },
   {

@@ -161,7 +161,7 @@
         <!-- Audio & Synthetic Speech -->
         <div class="space-y-3">
           <label class="block text-xs font-bold uppercase tracking-wider text-[#00E5FF]">
-            Audio Tactical Cues & JARVIS Neural Speech
+            Audio Tactical Cues & AXIS Neural Speech
           </label>
           <div class="grid grid-cols-2 gap-3">
             <label class="flex items-center justify-between p-3 rounded-lg bg-[#061425]/60 border border-white/10 cursor-pointer">
@@ -174,7 +174,7 @@
             <label class="flex items-center justify-between p-3 rounded-lg bg-[#061425]/60 border border-white/10 cursor-pointer">
               <div>
                 <div class="text-xs font-bold text-white">Voice Synthesis</div>
-                <div class="text-[10px] text-[#8BA1B8]">JARVIS verbal status briefings</div>
+                <div class="text-[10px] text-[#8BA1B8]">AXIS verbal status briefings</div>
               </div>
               <input type="checkbox" bind:checked={voiceSynthesis} class="w-4 h-4 accent-[#00E5FF]" />
             </label>

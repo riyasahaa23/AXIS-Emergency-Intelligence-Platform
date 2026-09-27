@@ -163,7 +163,7 @@
             </div>
             <div>
               <span class="text-slate-400">Crew / Operator:</span>
-              <div class="font-bold text-white mt-0.5">{item.operator || 'JARVIS Autonomous Support'}</div>
+              <div class="font-bold text-white mt-0.5">{item.operator || 'AXIS Autonomous Support'}</div>
             </div>
             <div>
               <span class="text-slate-400">Telemetry Last Ping:</span>

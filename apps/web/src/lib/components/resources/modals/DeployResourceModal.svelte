@@ -119,7 +119,7 @@
         <!-- Consequence Warning Box Matching Safety Rules -->
         <div class="p-3 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[11px] font-sans text-[#C5D1DE]">
           <span class="font-bold text-[#00E5FF] font-mono">OPERATIONAL CONSEQUENCE:</span>
-          Status will transition from <span class="text-emerald-400 font-mono">AVAILABLE</span> to <span class="text-amber-400 font-mono">EN ROUTE</span>. Live asset metrics and map coordinates will update across JARVIS.
+          Status will transition from <span class="text-emerald-400 font-mono">AVAILABLE</span> to <span class="text-amber-400 font-mono">EN ROUTE</span>. Live asset metrics and map coordinates will update across AXIS.
         </div>
 
         <!-- Actions -->

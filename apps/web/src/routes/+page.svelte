@@ -6,12 +6,12 @@
   import QuickTelemetry from '$components/widgets/QuickTelemetry.svelte';
   import MonitoringBadge from '$components/widgets/MonitoringBadge.svelte';
   import RiskLegend from '$components/widgets/RiskLegend.svelte';
-  import JarvisOrb from '$components/widgets/JarvisOrb.svelte';
+  import AxisOrb from '$components/widgets/AxisOrb.svelte';
   import IncidentDetailCard from '$components/incidents/IncidentDetailCard.svelte';
   import IntelligencePanel from '$components/intelligence/IntelligencePanel.svelte';
   import ScenarioDrawer from '$components/scenarios/ScenarioDrawer.svelte';
   import CommandActionBar from '$components/command/CommandActionBar.svelte';
-  import JarvisCentralOverlay from '$components/jarvis/JarvisCentralOverlay.svelte';
+  import AxisCentralOverlay from '$components/axis/AxisCentralOverlay.svelte';
   import IncidentsView from '$components/incidents/IncidentsView.svelte';
   import AnalysisView from '$components/analysis/AnalysisView.svelte';
   import ScenariosView from '$components/scenarios/ScenariosView.svelte';
@@ -23,9 +23,14 @@
   import IncidentSimulateModal from '$components/incidents/modals/IncidentSimulateModal.svelte';
   import IncidentPlanModal from '$components/incidents/modals/IncidentPlanModal.svelte';
   import UploadDataModal from '$components/command/UploadDataModal.svelte';
-  import { selectedIncident } from '$stores/incidentStore';
-  import { isJarvisCentralActive } from '$stores/commandStore';
+  import { selectedIncident, syncIncidentsFromBackend } from '$stores/incidentStore';
+  import { isAxisCentralActive } from '$stores/commandStore';
   import { activeNavSection } from '$stores/systemStore';
+  import { onMount } from 'svelte';
+
+  onMount(() => {
+    syncIncidentsFromBackend();
+  });
 </script>
 
 <div class="flex flex-col w-screen h-screen overflow-hidden bg-[#020711] text-[#F0F6FC]">
@@ -85,7 +90,7 @@
         <!-- Cockpit HUD Frame Overlay (curved glass viewport frame) -->
         <CockpitFrame />
 
-        {#if !$isJarvisCentralActive}
+        {#if !$isAxisCentralActive}
           <!-- Floating HUD Telemetry (Top Left of Globe) -->
           <div class="absolute top-4 left-5 z-20 flex flex-col gap-3 pointer-events-auto">
             <QuickTelemetry />
@@ -104,7 +109,7 @@
           <!-- Bottom Left: Compact Risk Legend & 3D AI Hologram Orb -->
           <div class="flex flex-col gap-2.5 pointer-events-auto shrink-0 max-w-[220px]">
             <RiskLegend />
-            <JarvisOrb />
+            <AxisOrb />
           </div>
 
           <!-- Bottom Center: Floating Command & Scenario Trigger Dock -->
@@ -121,8 +126,8 @@
       <!-- On-Demand Slide-Up Scenario Simulation Drawer -->
       <ScenarioDrawer />
 
-      <!-- Central JARVIS Mode Transformation Overlay -->
-      <JarvisCentralOverlay />
+      <!-- Central AXIS Mode Transformation Overlay -->
+      <AxisCentralOverlay />
 
       <!-- Global Incident Workflow Modals -->
       <IncidentAnalyzeModal />

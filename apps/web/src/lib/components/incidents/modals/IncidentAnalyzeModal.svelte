@@ -39,7 +39,7 @@
     const inc = $selectedIncident;
     recordHistoryEvent(
       'analysis',
-      'JARVIS-CORE',
+      'AXIS-CORE',
       'Incident Analysis Started',
       inc.name,
       `Initiated multi-layer intelligence analysis for ${inc.region}, ${inc.country}`,
@@ -64,7 +64,7 @@
 
       recordHistoryEvent(
         'analysis',
-        'JARVIS-CORE',
+        'AXIS-CORE',
         'Analysis Completed',
         inc.name,
         `Risk Index: ${inc.riskScore}/100, Population Exposed: ${inc.affectedPopulation}, Confidence: ${Math.round(inc.confidence * 100)}%`,
@@ -116,7 +116,7 @@
           </div>
           <div>
             <div class="flex items-center gap-1.5 text-[10px] text-[#00E5FF] font-bold tracking-widest uppercase">
-              <span>JARVIS</span>
+              <span>AXIS</span>
               <span>//</span>
               <span>INCIDENT ANALYSIS</span>
             </div>

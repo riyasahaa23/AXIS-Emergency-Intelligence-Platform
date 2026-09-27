@@ -239,7 +239,7 @@
 
     recordHistoryEvent(
       'response',
-      'JARVIS-CORE',
+      'AXIS-CORE',
       'Response Plan Generated',
       inc.name,
       `Generated ${directives.length} prioritized tactical operations. Pending Human Commander Approval.`,
@@ -378,7 +378,7 @@
           </div>
           <div>
             <div class="flex items-center gap-1.5 text-[10px] text-[#8B5CF6] font-bold tracking-widest uppercase">
-              <span>JARVIS</span>
+              <span>AXIS</span>
               <span>//</span>
               <span>TACTICAL RESPONSE PLANNER</span>
             </div>
@@ -512,7 +512,7 @@
             <div class="p-3 rounded-xl bg-[#020711]/60 border border-white/5 space-y-1.5 text-[11px]">
               <div class="flex justify-between">
                 <span class="text-[#8BA1B8]">Authorizing Commander:</span>
-                <span class="text-white font-bold">JARVIS COMMAND HQ</span>
+                <span class="text-white font-bold">AXIS COMMAND HQ</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-[#8BA1B8]">Assigned Operational Sector:</span>

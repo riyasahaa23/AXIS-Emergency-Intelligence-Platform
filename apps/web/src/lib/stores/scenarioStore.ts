@@ -9,14 +9,36 @@ import type {
   ScenarioViewTab,
   ScenarioTimelineDay,
   ScenarioDetailTab,
-  SavedScenario
+  SavedScenario,
+  SimulatedScenarioResponseContext
 } from '$lib/types/scenario';
 import { incidents, selectIncident, selectedIncident } from '$lib/stores/incidentStore';
+import { activeNavSection } from '$lib/stores/systemStore';
+import { recordHistoryEvent } from '$lib/stores/historyStore';
 
 // 1. Navigation & View Stores
 export const activeScenarioView = writable<ScenarioViewTab>('builder');
 export const activeScenarioDetailTab = writable<ScenarioDetailTab>('impact_projection');
-export const selectedScenarioHazard = writable<string>('flood');
+export const selectedScenarioHazard = writable<string>('earthquake');
+export const activeScenarioName = writable<string>('Noto Peninsula Aftershock Simulation');
+export const activeScenarioPresetId = writable<string>('baseline');
+export const activeSimulatedScenarioForResponse = writable<SimulatedScenarioResponseContext | null>(null);
+
+// 2. Active Scenario Configuration Stores
+export const scenarioParameters = writable<Record<string, number>>({
+  magnitude: 6.8,
+  aftershockRate: 45,
+  infraVulnerability: 30,
+  roadAccessibility: 65
+});
+
+export const scenarioFactors = writable<Record<string, boolean>>({
+  tsunamiCoupling: false,
+  gridBlackout: true,
+  coastalSubsidence: false
+});
+
+export const scenarioActiveExtraFactorIds = writable<string[]>([]);
 
 // Automatically synchronize scenario hazard when selectedIncident changes globally
 selectedIncident.subscribe((inc) => {
@@ -39,24 +61,10 @@ selectedIncident.subscribe((inc) => {
     config.factors.forEach((f) => { newFactors[f.id] = f.defaultActive; });
     scenarioFactors.set(newFactors);
     scenarioActiveExtraFactorIds.set([]);
+    activeScenarioPresetId.set('baseline');
+    activeScenarioName.set(`${inc.name || inc.title} - Counterfactual Simulation`);
   }
 });
-
-// 2. Active Scenario Configuration Stores
-export const scenarioParameters = writable<Record<string, number>>({
-  rainfallIncrease: 50,
-  riverDischarge: 40,
-  durationDays: 14,
-  seaLevelRise: 0.5
-});
-
-export const scenarioFactors = writable<Record<string, boolean>>({
-  upstreamDamRelease: true,
-  drainageFailure: true,
-  populationMovement: false
-});
-
-export const scenarioActiveExtraFactorIds = writable<string[]>([]);
 
 // 3. Simulation Timeline & Playback
 export const simulationTimelineDay = writable<ScenarioTimelineDay>(7);
@@ -114,6 +122,8 @@ export function setScenarioHazard(hazardType: string) {
   });
   scenarioFactors.set(newFactors);
   scenarioActiveExtraFactorIds.set([]);
+  activeScenarioPresetId.set('baseline');
+  activeScenarioName.set(`${config.name} Simulation`);
 
   // Sync with global incident store if matching incident exists
   const allIncidents = get(incidents);
@@ -121,6 +131,21 @@ export function setScenarioHazard(hazardType: string) {
   if (matched) {
     selectIncident(matched);
   }
+}
+
+/**
+ * Apply a predefined scenario preset (e.g. Baseline, Strong Aftershock, Extreme Flood)
+ */
+export function applyScenarioPreset(presetId: string) {
+  const config = get(currentHazardConfig);
+  const preset = config.presets?.find((p) => p.id === presetId);
+  if (!preset) return;
+
+  activeScenarioPresetId.set(presetId);
+  scenarioParameters.set({ ...preset.parameters });
+  scenarioFactors.set({ ...preset.factors });
+  activeScenarioName.set(`${config.name} (${preset.label})`);
+  simulationStage.set(`APPLIED PRESET: ${preset.label.toUpperCase()}`);
 }
 
 /**
@@ -182,8 +207,19 @@ export function resetScenarioConfiguration() {
   });
   scenarioFactors.set(newFactors);
   scenarioActiveExtraFactorIds.set([]);
+  activeScenarioPresetId.set('baseline');
+  activeScenarioName.set(`${config.name} Simulation`);
   simulationTimelineDay.set(7);
   simulationStage.set('CONFIGURATION RESET TO DEFAULT');
+
+  recordHistoryEvent(
+    'scenarios',
+    'Scenario Reset To Baseline',
+    config.name,
+    'Reset all simulation parameters, extra factors, and multipliers to hazard default values.',
+    'info',
+    'COMMANDER'
+  );
 }
 
 /**
@@ -247,29 +283,94 @@ export async function runScenarioSimulation(): Promise<void> {
 }
 
 /**
+ * Apply current counterfactual scenario parameters directly to Response operations pipeline
+ */
+export function applyScenarioToResponse() {
+  const result = get(scenarioSimulationResult);
+  const hazard = get(selectedScenarioHazard);
+  const inc = get(selectedIncident);
+  const config = get(currentHazardConfig);
+  const scenarioName = get(activeScenarioName) || `${config.name} Simulation`;
+  const baselineRisk = config.baseMetrics.riskScore;
+  const riskScore = result?.simulatedMetrics?.riskScore ?? baselineRisk;
+  const riskDelta = riskScore - baselineRisk;
+
+  const simContext: SimulatedScenarioResponseContext = {
+    scenarioId: get(activeSavedScenarioId) || `scen-${Date.now()}`,
+    scenarioName,
+    incidentId: inc?.id || config.incidentId,
+    incidentName: inc?.title || config.incidentName,
+    hazardType: hazard,
+    riskScore,
+    riskDelta,
+    affectedPopulation: result?.simulatedMetrics?.affectedPopulation ?? config.baseMetrics.affectedPopulation,
+    infrastructureImpact: `${result?.simulatedMetrics?.roadsAffected ?? config.baseMetrics.roadsAffected} roads, ${result?.simulatedMetrics?.bridgesAffected ?? config.baseMetrics.bridgesAffected} bridges`,
+    requiredTeamsCount: Math.ceil(riskScore / 5),
+    requiredSheltersCount: Math.ceil(riskScore / 8),
+    appliedAt: new Date().toLocaleTimeString()
+  };
+
+  activeSimulatedScenarioForResponse.set(simContext);
+
+  recordHistoryEvent(
+    'scenarios',
+    'Scenario Applied To Response',
+    scenarioName,
+    `Simulated Risk ${riskScore}/100 (Δ${riskDelta > 0 ? '+' : ''}${riskDelta}) pushed to Response directives pipeline`,
+    'warning',
+    'AXIS-AI'
+  );
+
+  activeNavSection.set('response');
+}
+
+export function clearSimulatedScenarioForResponse() {
+  activeSimulatedScenarioForResponse.set(null);
+}
+
+/**
  * Save current scenario configuration to library
  */
-export function saveCurrentScenario(name: string, summary: string): SavedScenario {
+export function saveCurrentScenario(name?: string, summary?: string): SavedScenario {
   const config = get(currentHazardConfig);
   const params = get(scenarioParameters);
   const factors = get(scenarioFactors);
+  const result = get(scenarioSimulationResult);
+  const baselineRisk = config.baseMetrics.riskScore;
+  const scenarioRisk = result?.simulatedMetrics?.riskScore ?? baselineRisk;
+  const riskDelta = scenarioRisk - baselineRisk;
 
+  const chosenName = name?.trim() || get(activeScenarioName) || `${config.name} Scenario`;
   const newScenario: SavedScenario = {
     id: `scen-${Date.now()}`,
-    name: name.trim() || `${config.name} (Custom)`,
+    name: chosenName,
     incidentId: config.incidentId,
     incidentName: config.incidentName,
     hazardType: config.hazardType,
     parameters: { ...params },
     factors: { ...factors },
     createdAt: new Date().toUTCString().replace(/GMT.*/, 'UTC'),
-    status: 'Ready',
-    summary: summary.trim() || `Custom counterfactual scenario with ${Object.keys(params).length} modified parameters.`
+    status: 'Simulated',
+    summary: summary?.trim() || `Counterfactual simulation with projected risk ${scenarioRisk}/100 (Δ${riskDelta > 0 ? '+' : ''}${riskDelta}).`,
+    baselineRisk,
+    scenarioRisk,
+    riskDelta,
+    isSimulated: true
   };
 
   savedScenarios.update((list) => [newScenario, ...list]);
   activeSavedScenarioId.set(newScenario.id);
   isSaveModalOpen.set(false);
+
+  recordHistoryEvent(
+    'scenarios',
+    'Scenario Saved To Library',
+    chosenName,
+    `Saved with Risk ${scenarioRisk}/100 and ${Object.keys(params).length} modified parameters`,
+    'success',
+    'COMMANDER'
+  );
+
   return newScenario;
 }
 
@@ -282,6 +383,7 @@ export function loadSavedScenario(scen: SavedScenario) {
   scenarioFactors.set({ ...scen.factors });
   scenarioActiveExtraFactorIds.set([]);
   activeSavedScenarioId.set(scen.id);
+  activeScenarioName.set(scen.name);
   activeScenarioView.set('builder');
   simulationStage.set(`LOADED SCENARIO: ${scen.name.toUpperCase()}`);
 }
@@ -290,17 +392,30 @@ export function loadSavedScenario(scen: SavedScenario) {
  * Duplicate a saved scenario in library
  */
 export function duplicateSavedScenario(id: string) {
+  let duplicatedId = '';
   savedScenarios.update((list) => {
     const existing = list.find((s) => s.id === id);
     if (!existing) return list;
+    duplicatedId = `scen-${Date.now()}`;
     const duplicated: SavedScenario = {
       ...existing,
-      id: `scen-${Date.now()}`,
+      id: duplicatedId,
       name: `${existing.name} (Copy)`,
       createdAt: 'Just now'
     };
     return [duplicated, ...list];
   });
+  if (duplicatedId) {
+    activeSavedScenarioId.set(duplicatedId);
+    recordHistoryEvent(
+      'scenarios',
+      'Scenario Duplicated',
+      duplicatedId,
+      `Cloned scenario configuration from source ${id}`,
+      'info',
+      'COMMANDER'
+    );
+  }
 }
 
 /**
@@ -308,4 +423,16 @@ export function duplicateSavedScenario(id: string) {
  */
 export function deleteSavedScenario(id: string) {
   savedScenarios.update((list) => list.filter((s) => s.id !== id));
+  if (get(activeSavedScenarioId) === id) {
+    const remaining = get(savedScenarios);
+    activeSavedScenarioId.set(remaining.length > 0 ? remaining[0].id : null);
+  }
+  recordHistoryEvent(
+    'scenarios',
+    'Scenario Deleted',
+    id,
+    'Removed scenario from active library catalog',
+    'info',
+    'COMMANDER'
+  );
 }

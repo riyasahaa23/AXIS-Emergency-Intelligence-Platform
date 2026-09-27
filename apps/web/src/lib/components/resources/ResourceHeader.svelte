@@ -50,7 +50,7 @@
       <button
         on:click={() => isOptimizeModalOpen.set(true)}
         class="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/50 hover:bg-amber-500/25 text-amber-300 font-mono text-xs font-semibold flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(245,158,11,0.2)] cursor-pointer"
-        title="Open JARVIS AI Logistics Optimizer"
+        title="Open AXIS AI Logistics Optimizer"
       >
         <span>⚡</span>
         <span>OPTIMIZE FLEET</span>

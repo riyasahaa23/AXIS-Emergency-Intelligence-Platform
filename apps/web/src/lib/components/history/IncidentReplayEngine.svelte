@@ -187,7 +187,7 @@
       </div>
 
       <div class="p-2 rounded-lg bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[10px] text-[#00E5FF] flex items-center justify-between mt-2">
-        <span>JARVIS NEURAL DECISION LOG:</span>
+        <span>AXIS NEURAL DECISION LOG:</span>
         <span class="font-bold">VERIFIED RECONSTRUCTION ✓</span>
       </div>
     </div>

@@ -393,7 +393,7 @@
           </div>
           <div>
             <div class="flex items-center gap-1.5 text-[10px] text-[#3D7CFF] font-bold tracking-widest uppercase">
-              <span>JARVIS</span>
+              <span>AXIS</span>
               <span>//</span>
               <span>WHAT-IF SCENARIO SIMULATOR</span>
             </div>

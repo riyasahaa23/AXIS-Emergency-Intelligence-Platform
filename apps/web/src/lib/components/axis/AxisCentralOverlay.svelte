@@ -1,17 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import JarvisCore3D from './JarvisCore3D.svelte';
+  import AxisCore3D from './AxisCore3D.svelte';
   import {
-    isJarvisCentralActive,
-    jarvisState,
-    jarvisResponseText,
-    closeJarvisCentral,
+    isAxisCentralActive,
+    axisState,
+    axisResponseText,
+    closeAxisCentral,
     submitCommand,
-    type JarvisActivityState
+    type AxisActivityState
   } from '../../stores/commandStore';
   import { openScenarioDrawer } from '../../stores/systemStore';
   import { selectIncident, clearIncidentSelection, incidents } from '../../stores/incidentStore';
-  import { masterHeartbeat } from '../../three/jarvisHeartbeat';
+  import { masterHeartbeat } from '../../three/axisHeartbeat';
 
   let inputVal = '';
   let inputEl: HTMLInputElement;
@@ -28,8 +28,8 @@
 
   onMount(() => {
     if (inputEl) inputEl.focus();
-    if ($jarvisState === 'IDLE') {
-      jarvisState.set('LISTENING');
+    if ($axisState === 'IDLE') {
+      axisState.set('LISTENING');
     }
 
     function syncHeartbeat() {
@@ -45,7 +45,7 @@
         if (contextualPanel) {
           dismissContextual();
         } else {
-          closeJarvisCentral();
+          closeAxisCentral();
         }
       }
     }
@@ -66,7 +66,7 @@
 
     isExecuting = true;
     contextualPanel = null;
-    jarvisState.set('THINKING');
+    axisState.set('THINKING');
 
     if (lower.includes('flood') || lower.includes('zone 4') || lower.includes('bangladesh')) {
       activeOperationStep = 'UNDERSTANDING REQUEST: FLOOD RISK ZONE 4';
@@ -85,7 +85,7 @@
       activeOperationStep = 'RUNNING NEURAL FLOOD IMPACT SIMULATION...';
       await delay(500);
 
-      jarvisState.set('RESPONDING');
+      axisState.set('RESPONDING');
       contextualPanel = 'flood';
       isExecuting = false;
       submitCommand(queryText);
@@ -99,7 +99,7 @@
       activeOperationStep = 'PROJECTING 72-HOUR INUNDATION DELTA...';
       await delay(500);
 
-      jarvisState.set('RESPONDING');
+      axisState.set('RESPONDING');
       contextualPanel = 'rainfall';
       isExecuting = false;
       submitCommand(queryText);
@@ -110,14 +110,14 @@
       activeOperationStep = 'CALCULATING FACILITY OCCUPANCY & SURGE CAPACITY...';
       await delay(550);
 
-      jarvisState.set('RESPONDING');
+      axisState.set('RESPONDING');
       contextualPanel = 'shelters';
       isExecuting = false;
       submitCommand(queryText);
     } else {
       activeOperationStep = 'PROCESSING PLANETARY QUERY WITH AI CORE...';
       await delay(700);
-      jarvisState.set('RESPONDING');
+      axisState.set('RESPONDING');
       isExecuting = false;
       submitCommand(queryText);
     }
@@ -138,25 +138,25 @@
   function dismissContextual() {
     contextualPanel = null;
     clearIncidentSelection();
-    jarvisState.set('LISTENING');
+    axisState.set('LISTENING');
   }
 
   function onMicToggle() {
-    if ($jarvisState === 'LISTENING') {
-      jarvisState.set('IDLE');
+    if ($axisState === 'LISTENING') {
+      axisState.set('IDLE');
     } else {
-      jarvisState.set('LISTENING');
+      axisState.set('LISTENING');
     }
   }
 
   function cycleState() {
-    const states: JarvisActivityState[] = ['LISTENING', 'THINKING', 'ANALYSING', 'SIMULATING', 'RESPONDING', 'IDLE'];
-    const next = states[(states.indexOf($jarvisState) + 1) % states.length];
-    jarvisState.set(next);
+    const states: AxisActivityState[] = ['LISTENING', 'THINKING', 'ANALYSING', 'SIMULATING', 'RESPONDING', 'IDLE'];
+    const next = states[(states.indexOf($axisState) + 1) % states.length];
+    axisState.set(next);
   }
 </script>
 
-{#if $isJarvisCentralActive}
+{#if $isAxisCentralActive}
   <!-- Central Activation Backdrop: Highly transparent to let the glowing 3D Earth shine through -->
   <div class="absolute inset-0 z-40 flex flex-col items-center justify-between p-4 md:p-6 bg-[#020711]/25 backdrop-blur-[1px] select-none transition-all duration-700 animate-in fade-in overflow-hidden">
     
@@ -164,11 +164,11 @@
     <div class="w-full flex items-center justify-between z-10 shrink-0">
       <div class="flex items-center gap-2.5">
         <span class="w-2.5 h-2.5 rounded-full bg-[#00E5FF] shadow-[0_0_12px_#00E5FF] animate-pulse"></span>
-        <span class="text-xs font-mono uppercase tracking-[0.25em] text-[#00E5FF] font-bold">JARVIS // Central Intelligence Core</span>
+        <span class="text-xs font-mono uppercase tracking-[0.25em] text-[#00E5FF] font-bold">AXIS // Central Intelligence Core</span>
       </div>
 
       <button
-        on:click={closeJarvisCentral}
+        on:click={closeAxisCentral}
         class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#061425]/80 hover:bg-[#082038] border border-[#00E5FF]/40 hover:border-[#00E5FF] text-xs font-mono text-[#8BA1B8] hover:text-white transition-all shadow-[0_0_20px_rgba(0,0,0,0.6)] cursor-pointer"
         title="Return to Planetary Orbit (ESC)"
       >
@@ -182,7 +182,7 @@
       
       <!-- 3D WebGL Core Hero Component (Spacious, Unobstructed AI Core with Negative Space) -->
       <div class="relative w-[360px] h-[340px] sm:w-[480px] sm:h-[440px] md:w-[560px] md:h-[480px] flex items-center justify-center -my-2">
-        <JarvisCore3D size="lg" interactive={true} animateActivation={true} />
+        <AxisCore3D size="lg" interactive={true} animateActivation={true} />
       </div>
 
       <!-- ======================================================== -->
@@ -303,10 +303,10 @@
         </div>
       {/if}
 
-      <!-- JARVIS Branding (High-Impact Typography) -->
+      <!-- AXIS Branding (High-Impact Typography) -->
       <div class="flex flex-col items-center mt-1 mb-2">
         <h2 class="text-2xl sm:text-3xl font-bold font-mono tracking-[0.35em] text-white drop-shadow-[0_0_20px_rgba(0,229,255,0.7)]">
-          JARVIS
+          AXIS
         </h2>
         <p class="text-[10px] sm:text-xs font-mono tracking-[0.3em] text-[#8BA1B8] uppercase mt-0.5">
           PLANETARY EMERGENCY INTELLIGENCE
@@ -341,7 +341,7 @@
           title="Click to toggle AI state simulation"
         >
           <span class="w-2 h-2 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF] animate-ping"></span>
-          <span>{hbBpm} BPM // {$jarvisState}</span>
+          <span>{hbBpm} BPM // {$axisState}</span>
         </button>
 
         <!-- Right Waveform Bars (Height breathes in sync with master heartbeat pulse) -->
@@ -356,13 +356,13 @@
       </div>
 
       <!-- Response Banner (if available and no contextual panel active) -->
-      {#if $jarvisResponseText && !contextualPanel}
+      {#if $axisResponseText && !contextualPanel}
         <div class="w-full max-w-2xl mb-3 p-3.5 rounded-2xl bg-[#061425]/95 border border-[#00E5FF]/40 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-xs sm:text-sm font-mono text-[#F0F6FC] animate-in fade-in slide-in-from-bottom-2">
           <div class="flex items-center gap-2 text-xs text-[#00E5FF] mb-1 uppercase font-bold tracking-wider">
             <span class="w-1.5 h-1.5 rounded-full bg-[#00E5FF]"></span>
             Synthesized Intelligence
           </div>
-          <p class="leading-relaxed">{$jarvisResponseText}</p>
+          <p class="leading-relaxed">{$axisResponseText}</p>
         </div>
       {/if}
 
@@ -373,7 +373,7 @@
           <!-- Microphone Button -->
           <button
             on:click={onMicToggle}
-            class="flex items-center justify-center w-8 h-8 mr-3 rounded-full {$jarvisState === 'LISTENING' ? 'bg-[#00E5FF] text-[#020711]' : 'bg-[#00E5FF]/20 text-[#00E5FF]'} hover:brightness-125 transition-all shadow-[0_0_12px_rgba(0,229,255,0.4)] cursor-pointer"
+            class="flex items-center justify-center w-8 h-8 mr-3 rounded-full {$axisState === 'LISTENING' ? 'bg-[#00E5FF] text-[#020711]' : 'bg-[#00E5FF]/20 text-[#00E5FF]'} hover:brightness-125 transition-all shadow-[0_0_12px_rgba(0,229,255,0.4)] cursor-pointer"
             title="Toggle Voice Input"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -387,7 +387,7 @@
             type="text"
             bind:value={inputVal}
             on:keydown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder='Instruct JARVIS... e.g. "What happens if rainfall increases by 30%?"'
+            placeholder='Instruct AXIS... e.g. "What happens if rainfall increases by 30%?"'
             class="flex-1 bg-transparent text-xs sm:text-[13px] text-white placeholder-[#8BA1B8]/60 focus:outline-none font-mono tracking-wide"
           />
 

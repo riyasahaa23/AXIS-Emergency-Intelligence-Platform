@@ -182,7 +182,7 @@ const INITIAL_MESSAGES: CommunicationMessage[] = [
   {
     id: 'msg-09',
     channelId: 'intel',
-    senderName: 'JARVIS Orbital Recon',
+    senderName: 'AXIS Orbital Recon',
     senderRole: 'Autonomous AI',
     senderLocation: 'Copernicus Sentinel Feed',
     timestamp: '14:02:11 UTC',
@@ -326,7 +326,7 @@ export function sendMessage(content: string, severity: MessageSeverity = 'routin
   const newMsg: CommunicationMessage = {
     id: `msg-${Date.now()}`,
     channelId,
-    senderName: 'JARVIS Command Station',
+    senderName: 'AXIS Command Station',
     senderRole: 'Mission Operations',
     senderLocation: 'Planetary Emergency Ops',
     timestamp: timeStr,
@@ -345,7 +345,7 @@ export function sendMessage(content: string, severity: MessageSeverity = 'routin
     channelId,
     content.slice(0, 80),
     severity === 'critical' ? 'critical' : severity === 'warning' ? 'warning' : 'info',
-    'JARVIS-OPERATOR'
+    'AXIS-OPERATOR'
   );
 }
 

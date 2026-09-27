@@ -9,7 +9,7 @@
     createAtmosphereMaterial
   } from './earthTextures';
   import { incidents, selectedIncident, selectIncident, globeFocusTarget } from '../stores/incidentStore';
-  import { isJarvisCentralActive } from '../stores/commandStore';
+  import { isAxisCentralActive } from '../stores/commandStore';
   import type { HazardIncident } from '../types';
 
   let container: HTMLDivElement;
@@ -25,7 +25,7 @@
   let raycaster = new THREE.Raycaster();
   let mouse = new THREE.Vector2();
 
-  // Dimming transition for central JARVIS activation
+  // Dimming transition for central AXIS activation
   let currentDimFactor = 1.0;
   let targetDimFactor = 1.0;
 
@@ -61,14 +61,14 @@
       focusOnCoords(target.lat, target.lng, target.zoom);
     });
 
-    const unsubscribeJarvis = isJarvisCentralActive.subscribe((active) => {
+    const unsubscribeAxis = isAxisCentralActive.subscribe((active) => {
       targetDimFactor = active ? 0.88 : 1.0;
       cameraTargetDistance = active ? 14.5 : DEFAULT_CAMERA_DISTANCE;
     });
 
     return () => {
       unsubscribeFocus();
-      unsubscribeJarvis();
+      unsubscribeAxis();
       window.removeEventListener('resize', onWindowResize);
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);

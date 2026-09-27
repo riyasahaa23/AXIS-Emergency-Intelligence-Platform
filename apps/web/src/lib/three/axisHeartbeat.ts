@@ -1,4 +1,4 @@
-﻿import type { JarvisActivityState } from '../stores/commandStore';
+import type { AxisActivityState, JarvisActivityState } from '../stores/commandStore';
 
 export interface HeartbeatSample {
   time: number;          // Total elapsed animation time
@@ -13,7 +13,7 @@ export interface HeartbeatSample {
   waveOpacity: number;   // Opacity of propagating energy wave
   isPrimaryBeat: boolean;
   isSecondaryBeat: boolean;
-  state: JarvisActivityState;
+  state: AxisActivityState;
 }
 
 export interface StateHeartbeatProfile {
@@ -26,7 +26,7 @@ export interface StateHeartbeatProfile {
   violetEnergy: number;    // 0 to 1
 }
 
-const STATE_PROFILES: Record<JarvisActivityState, StateHeartbeatProfile> = {
+const STATE_PROFILES: Record<AxisActivityState, StateHeartbeatProfile> = {
   IDLE: {
     period: 1.50,       // ~40 BPM: calm, deep, steady resting rhythm
     strength: 1.0,
@@ -138,7 +138,7 @@ export function calculateHeartbeatEnvelope(phase: number): {
   };
 }
 
-export class JarvisHeartbeatController {
+export class AxisHeartbeatController {
   private time = 0;
   private currentPeriod = 1.5;
   private currentStrength = 1.0;
@@ -166,7 +166,7 @@ export class JarvisHeartbeatController {
   /**
    * Advances the master heartbeat by delta seconds.
    */
-  public update(delta: number, state: JarvisActivityState = 'IDLE'): HeartbeatSample {
+  public update(delta: number, state: AxisActivityState = 'IDLE'): HeartbeatSample {
     this.time += delta;
 
     // Smoothly interpolate period and strength toward target profile
@@ -235,5 +235,8 @@ export class JarvisHeartbeatController {
   }
 }
 
+// Backward compatibility alias
+export const JarvisHeartbeatController = AxisHeartbeatController;
+
 // Global master instance
-export const masterHeartbeat = new JarvisHeartbeatController();
+export const masterHeartbeat = new AxisHeartbeatController();

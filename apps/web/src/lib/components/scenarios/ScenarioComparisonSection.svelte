@@ -3,7 +3,10 @@
     activeScenarioDetailTab,
     currentHazardConfig,
     scenarioSimulationResult,
-    simulationTimelineDay
+    simulationTimelineDay,
+    activeScenarioView,
+    isSaveModalOpen,
+    applyScenarioToResponse
   } from '$lib/stores/scenarioStore';
   import type { ScenarioDetailTab } from '$lib/types/scenario';
 
@@ -413,4 +416,49 @@
 
   </div>
 
+  <!-- Action Bar: Save Scenario, Compare Scenarios, Plan Response, View Results -->
+  <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#061425]/90 border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        on:click={() => isSaveModalOpen.set(true)}
+        class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/15 text-xs font-bold transition-all cursor-pointer"
+      >
+        <span>💾</span>
+        <span>Save Scenario</span>
+      </button>
+
+      <button
+        type="button"
+        on:click={() => activeScenarioView.set('comparison')}
+        class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#00E5FF] border border-[#00E5FF]/30 text-xs font-bold transition-all cursor-pointer"
+      >
+        <span>⚖️</span>
+        <span>Compare Matrix</span>
+      </button>
+
+      <button
+        type="button"
+        on:click={() => activeScenarioView.set('results')}
+        class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#C084FC] border border-[#8B5CF6]/30 text-xs font-bold transition-all cursor-pointer"
+      >
+        <span>📊</span>
+        <span>Results Dossier</span>
+      </button>
+    </div>
+
+    <div>
+      <button
+        type="button"
+        on:click={applyScenarioToResponse}
+        class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#7C3AED] via-[#8B5CF6] to-[#00E5FF] hover:opacity-95 text-white text-xs font-bold tracking-wider uppercase shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all cursor-pointer active:scale-98"
+      >
+        <span>🚀</span>
+        <span>PLAN RESPONSE (APPLY SIMULATION)</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
 </div>
+

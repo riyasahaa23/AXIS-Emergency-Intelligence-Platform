@@ -34,7 +34,7 @@
   function generateReportText(): string {
     if (exportFormat === 'json') {
       const data = {
-        report: 'JARVIS RESOURCE SITREP',
+        report: 'AXIS RESOURCE SITREP',
         generatedAt: reportTimestamp,
         hazard: pkg.hazardName,
         theatre: pkg.locationName,
@@ -85,7 +85,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `JARVIS-RESOURCE-REPORT-${pkg.hazardName.toUpperCase()}-${Date.now()}.${ext}`;
+    a.download = `AXIS-RESOURCE-REPORT-${pkg.hazardName.toUpperCase()}-${Date.now()}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
     downloaded = true;
@@ -147,7 +147,7 @@
           </div>
           <div class="p-2.5 rounded border border-slate-800 bg-slate-900/60">
             <div class="text-[10px] text-slate-400 uppercase tracking-wider">Command Authority</div>
-            <div class="text-xs font-bold text-amber-300 mt-0.5">JARVIS-LOGISTICS</div>
+            <div class="text-xs font-bold text-amber-300 mt-0.5">AXIS-LOGISTICS</div>
           </div>
         </div>
 

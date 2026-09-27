@@ -1,12 +1,13 @@
 {
-    "name": "jarvis-web",
+    "name": "@axis/web",
     "version": "0.1.0",
     "private": true,
     "type": "module",
     "scripts": {
         "dev": "vite dev --host 0.0.0.0 --port 5180",
         "build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "test": "vite build"
     },
     "dependencies": {
         "clsx": "^2.1.1",

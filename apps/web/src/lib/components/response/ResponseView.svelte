@@ -28,6 +28,11 @@
     setResponseHazard
   } from '../../stores/responseStore';
   import { selectedIncident } from '../../stores/incidentStore';
+  import {
+    activeSimulatedScenarioForResponse,
+    clearSimulatedScenarioForResponse
+  } from '$lib/stores/scenarioStore';
+  import { activeNavSection } from '$lib/stores/systemStore';
 
   // Keep hazard synchronized if user selected another incident
   $: if ($selectedIncident && $selectedIncident.type !== $activeResponseHazard) {
@@ -36,6 +41,53 @@
 </script>
 
 <div class="flex-1 flex flex-col h-full overflow-hidden p-4 bg-[#020711] text-[#F0F6FC] select-none">
+  <!-- Simulated Scenario Mode Banner -->
+  {#if $activeSimulatedScenarioForResponse}
+    <div class="mb-3 p-3.5 rounded-2xl bg-[#1E112A] border border-[#A855F7] shadow-[0_0_24px_rgba(168,85,247,0.3)] flex flex-wrap items-center justify-between gap-3 font-mono shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-[#A855F7]/20 border border-[#A855F7]/50 flex items-center justify-center text-[#D8B4FE] text-base animate-pulse">
+          ⚠️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#A855F7]/30 text-[#F3E8FF] border border-[#C084FC]">
+              SIMULATED SCENARIO MODE
+            </span>
+            <span class="text-xs font-bold text-white">
+              {$activeSimulatedScenarioForResponse.scenarioName}
+            </span>
+            <span class="text-[10px] text-amber-300 font-semibold">
+              (NOT REAL-WORLD LIVE INCIDENT)
+            </span>
+          </div>
+          <div class="text-[11px] text-[#D8B4FE] mt-0.5">
+            Incident: <span class="text-white font-semibold">{$activeSimulatedScenarioForResponse.incidentName}</span> •
+            Projected Risk: <span class="text-[#EF4444] font-bold">{$activeSimulatedScenarioForResponse.riskScore}/100</span>
+            ({$activeSimulatedScenarioForResponse.riskDelta > 0 ? `+${$activeSimulatedScenarioForResponse.riskDelta}` : $activeSimulatedScenarioForResponse.riskDelta} vs baseline) •
+            Est. Exposed: <span class="text-white font-semibold">{$activeSimulatedScenarioForResponse.affectedPopulation}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          on:click={() => activeNavSection.set('scenarios')}
+          class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-[#E9D5FF] border border-white/20 transition-colors cursor-pointer"
+        >
+          ← Edit Scenario
+        </button>
+        <button
+          type="button"
+          on:click={clearSimulatedScenarioForResponse}
+          class="px-3 py-1.5 rounded-lg bg-[#EF4444]/20 hover:bg-[#EF4444]/30 text-xs text-[#FCA5A5] border border-[#EF4444]/40 transition-colors cursor-pointer"
+        >
+          Exit Simulation Mode ✕
+        </button>
+      </div>
+    </div>
+  {/if}
+
   <!-- Top Command & Control Header -->
   <ResponseHeader />
 

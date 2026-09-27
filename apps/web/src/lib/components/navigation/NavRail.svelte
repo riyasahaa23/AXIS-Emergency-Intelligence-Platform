@@ -1,6 +1,6 @@
 <script lang="ts">
   import { activeNavSection, isNavCollapsed } from '../../stores/systemStore';
-  import { isJarvisCentralActive } from '../../stores/commandStore';
+  import { isAxisCentralActive } from '../../stores/commandStore';
   import { severityCounts } from '../../stores/incidentStore';
   import MiniGlobe from '../widgets/MiniGlobe.svelte';
 
@@ -24,7 +24,7 @@
   }
 </script>
 
-<aside class="relative z-30 flex flex-col items-center py-3.5 px-2 bg-[#020711]/60 backdrop-blur-xl border-r border-white/10 select-none transition-all duration-700 {$isNavCollapsed ? 'w-14' : 'w-48'} {$isJarvisCentralActive ? 'opacity-30 hover:opacity-90 filter brightness-75' : 'opacity-100'}">
+<aside class="relative z-30 flex flex-col items-center py-3.5 px-2 bg-[#020711]/60 backdrop-blur-xl border-r border-white/10 select-none transition-all duration-700 {$isNavCollapsed ? 'w-14' : 'w-48'} {$isAxisCentralActive ? 'opacity-30 hover:opacity-90 filter brightness-75' : 'opacity-100'}">
   
   <!-- Collapse/Expand Rail Toggle -->
   <button
@@ -109,7 +109,7 @@
           A SAFER<br/>PLANET<br/>THROUGH<br/>INTELLIGENCE
         </div>
         <div class="text-[8px] font-mono tracking-widest text-[#00E5FF] mt-2 uppercase font-semibold">
-          JARVIS ORBITAL
+          AXIS ORBITAL
         </div>
       </div>
     {:else}

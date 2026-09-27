@@ -226,7 +226,7 @@
       <!-- Footer -->
       <div class="p-4 border-t border-white/10 bg-[#061425]/60 flex items-center justify-between text-[11px] text-[#8BA1B8]">
         <span>Telemetric Status: Optimal</span>
-        <span class="text-[#00E5FF]">JARVIS C2 Node v2.4</span>
+        <span class="text-[#00E5FF]">AXIS C2 Node v2.4</span>
       </div>
     </div>
   </div>

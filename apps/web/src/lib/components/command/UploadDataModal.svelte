@@ -72,7 +72,7 @@
           </div>
           <div>
             <div class="flex items-center gap-1.5 text-[10px] text-[#00E5FF] font-bold tracking-widest uppercase">
-              <span>JARVIS</span>
+              <span>AXIS</span>
               <span>//</span>
               <span>TELEMETRY INGESTION</span>
             </div>

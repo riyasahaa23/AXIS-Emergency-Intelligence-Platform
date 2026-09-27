@@ -97,7 +97,7 @@ export const responseAuditLog = writable<ResponseAuditEntry[]>([
   {
     id: 'log-01',
     timestamp: '14:22:04 UTC',
-    operator: 'JARVIS-CORE',
+    operator: 'AXIS-CORE',
     action: 'Plan Initialized',
     target: 'Dhaka Flood Sector',
     severity: 'info'
@@ -113,7 +113,7 @@ export const responseAuditLog = writable<ResponseAuditEntry[]>([
   {
     id: 'log-03',
     timestamp: '14:15:30 UTC',
-    operator: 'JARVIS-ALERTS',
+    operator: 'AXIS-ALERTS',
     action: 'Critical Surge Advisory',
     target: 'Surma & Buriganga Basins',
     severity: 'warning'
@@ -227,7 +227,7 @@ export async function runAutoOptimization() {
   optimizationStage.set('Optimal response vector synthesized: +340K coverage, -115m delay.');
   isAutoOptimizing.set(false);
 
-  addAuditEntry('Ran JARVIS Auto-Optimization heuristic engine', 'success');
+  addAuditEntry('Ran AXIS Auto-Optimization heuristic engine', 'success');
 }
 
 // Apply single recommendation
@@ -275,7 +275,7 @@ export function applyAllOptimizationActions() {
     });
   });
 
-  addAuditEntry('Applied full JARVIS Auto-Optimization package to active theater', 'success');
+  addAuditEntry('Applied full AXIS Auto-Optimization package to active theater', 'success');
   isAutoOptimizeModalOpen.set(false);
 }
 

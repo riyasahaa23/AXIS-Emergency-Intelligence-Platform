@@ -136,7 +136,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-sm font-bold tracking-wider text-amber-300 uppercase">
-                JARVIS AI Logistics Optimization Engine
+                AXIS AI Logistics Optimization Engine
               </h2>
               <span class="px-1.5 py-0.5 text-[9px] rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase font-semibold">
                 Autonomous Heuristic v4.2
