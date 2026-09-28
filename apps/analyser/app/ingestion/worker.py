@@ -25,8 +25,13 @@ class IngestionWorker:
                 candidate = RedisJobQueue(self.redis_url, stream="axis.ingestion.jobs", group="axis-ingestion-workers", consumer=f"axis-ingestion-{uuid4().hex[:8]}")
                 await candidate.connect()
                 self.redis_queue = candidate
-            except Exception:  # noqa: BLE001 - optional Redis falls back to local execution
+            except Exception:  # noqa: BLE001 - local fallback is explicitly opt-in
                 self.redis_queue = None
+                settings = getattr(self.service, "settings", None)
+                if settings is not None and (
+                    settings.environment == "production" or not settings.allow_in_memory_fallback
+                ):
+                    raise RuntimeError("Redis is required for ingestion jobs in this runtime") from None
         self.worker_task = asyncio.create_task(self._run())
 
     async def stop(self) -> None:
@@ -82,5 +87,7 @@ class IngestionWorker:
                 await self.redis_queue.publish(run_id)
             else:
                 await self.local_queue.put(run_id)
-        elif self.redis_queue is not None:
-            await self.redis_queue.dead_letter(run_id, error)
+        else:
+            await self.service._update_run(run_id, "failed", error=error)
+            if self.redis_queue is not None:
+                await self.redis_queue.dead_letter(run_id, error)

@@ -13,13 +13,13 @@ import { MOCK_INCIDENTS } from '../mock/incidents';
  * Normalizes raw backend Incident payload into the shared HazardIncident contract.
  */
 export function normalizeIncident(raw: any): HazardIncident {
-  if (!raw) return MOCK_INCIDENTS[0];
+  if (!raw) throw new Error('Incident payload is empty');
   if (raw.coords && raw.overview && raw.details) {
     // Already in HazardIncident format
     return raw as HazardIncident;
   }
 
-  const numericSev = typeof raw.severity === 'number' ? raw.severity : 50;
+  const numericSev = typeof raw.severity === 'number' ? raw.severity : 0;
   let severityLevel: SeverityLevel = 'moderate';
   if (numericSev >= 80) severityLevel = 'critical';
   else if (numericSev >= 60) severityLevel = 'high';
@@ -30,36 +30,32 @@ export function normalizeIncident(raw: any): HazardIncident {
   const popStr = pop >= 1_000_000 ? `${(pop / 1_000_000).toFixed(1)}M` : `${Math.round(pop / 1_000)}K`;
 
   return {
-    id: raw.id || `inc-${Date.now()}`,
+    id: raw.id,
     name: raw.title || raw.name || 'Emergency Event',
-    type: (raw.hazard_type || raw.type || 'flood').toLowerCase() as HazardType,
-    region: raw.location || raw.region || 'Regional Sector',
-    country: raw.country || 'Global Response Zone',
-    coords: raw.coords || { lat: 20.0, lng: 78.0 },
+    type: (raw.hazard_type || raw.type || 'multi_hazard').toLowerCase() as HazardType,
+    region: raw.location || raw.region || 'Unknown location',
+    country: raw.country || 'Unknown',
+    coords: raw.coords || { lat: 0, lng: 0 },
     severity: severityLevel,
     affectedPopulation: `${popStr} affected`,
     affectedPopulationNum: pop,
-    displacedPopulation: `${Math.round(pop * 0.4)} displaced`,
-    displacedPopulationNum: Math.round(pop * 0.4),
-    roadsAffected: raw.roadsAffected || 12,
-    districtsAffected: raw.districtsAffected || 4,
-    relativeTime: raw.relativeTime || 'Just now',
-    timestamp: raw.created_at || raw.timestamp || new Date().toISOString(),
+    displacedPopulation: raw.displacedPopulation,
+    displacedPopulationNum: raw.displacedPopulationNum ?? 0,
+    roadsAffected: raw.roadsAffected ?? 0,
+    districtsAffected: raw.districtsAffected ?? 0,
+    relativeTime: raw.relativeTime || 'Unknown',
+    timestamp: raw.created_at || raw.timestamp || '',
     riskScore: Math.round(numericSev),
-    confidence: raw.confidence || 0.92,
-    thumbnailUrl: raw.thumbnailUrl || '/assets/flood_thumb.jpg',
+    confidence: raw.confidence ?? 0,
+    thumbnailUrl: raw.thumbnailUrl,
     status: raw.status === 'active' ? 'escalating' : (raw.status || 'monitoring'),
     details: raw.details || {
-      rainfallRate: 'Live Feed Monitored',
-      riverLevelMeters: 3.5,
-      shelterDemand: 'Active Staging',
-      roadAccessibility: 'Corridors Monitored',
-      description: raw.description || `Active incident reporting for ${raw.title || 'the region'}.`
+      description: raw.description || 'No incident description is available.'
     },
     overview: raw.overview || {
-      summary: raw.description || `Active telemetry registered in ${raw.location || 'the sector'}.`,
+      summary: raw.description || 'No incident summary is available.',
       riskLevel: severityLevel.toUpperCase(),
-      projectedConditions: 'Continuous real-time monitoring via AXIS Analyser array.',
+      projectedConditions: 'No projection is available.',
       keyMetrics: [
         { label: 'Exposed Population', value: popStr, sub: 'Direct impact envelope' },
         { label: 'Severity Index', value: `${Math.round(numericSev)}/100`, sub: 'Automated fusion score' }
@@ -73,7 +69,7 @@ export async function fetchIncidents(): Promise<HazardIncident[]> {
   if (Array.isArray(rawList)) {
     return rawList.map(normalizeIncident);
   }
-  return MOCK_INCIDENTS;
+  return [];
 }
 
 export async function fetchIncidentById(id: string): Promise<HazardIncident | null> {

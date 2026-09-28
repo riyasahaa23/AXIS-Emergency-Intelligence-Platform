@@ -21,6 +21,7 @@ class IngestionService:
         self.statuses: dict[str, dict] = {}
         self.idempotency: dict[str, str] = {}
         self.events = events
+        self.settings = None
 
     async def fetch(self, source_id: str, request: IngestionRequest) -> IngestionResult:
         existing = await self._existing_idempotent_run(source_id, request)

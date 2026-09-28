@@ -30,5 +30,7 @@ async def record_audit(request, action: str, outcome: str, resource_type: str | 
                 VALUES (:request_id, :actor, :action, :resource_type, :resource_id, :outcome, CAST(:metadata AS JSONB))"""), {
                 **event, "metadata": json.dumps(event["metadata"], default=str),
             })
-    except Exception:  # noqa: BLE001 - audit failure must not fail an operation
-        return
+    except Exception:  # noqa: BLE001 - production must not silently lose audit records
+        settings = getattr(request.app.state, "settings", None)
+        if settings is not None and settings.environment == "production":
+            raise

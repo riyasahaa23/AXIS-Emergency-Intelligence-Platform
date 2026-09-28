@@ -33,6 +33,14 @@ def test_readiness_is_public_for_orchestrators(client):
     assert response.status_code != 401
 
 
+def test_telemetry_uses_incident_store(client):
+    response = client.get("/api/data/telemetry")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["dataSources"] > 0
+    assert payload["activeIncidents"] == 0
+
+
 def test_production_readiness_fails_closed_without_database(client):
     settings = client.app.state.settings
     original_environment = settings.environment

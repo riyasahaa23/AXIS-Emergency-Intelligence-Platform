@@ -48,8 +48,13 @@ class AnalysisJobManager:
                 candidate = RedisJobQueue(self.redis_url, consumer=f"axis-worker-{uuid4().hex[:8]}")
                 await candidate.connect()
                 self.redis_queue = candidate
-            except Exception:  # noqa: BLE001 - Redis is optional in local mode
+            except Exception:  # noqa: BLE001 - local fallback is explicitly opt-in
                 self.redis_queue = None
+                settings = getattr(self.application.state, "settings", None)
+                if settings is not None and (
+                    settings.environment == "production" or not settings.allow_in_memory_fallback
+                ):
+                    raise RuntimeError("Redis is required for analysis jobs in this runtime") from None
         self.worker_task = asyncio.create_task(self._worker())
 
     async def stop(self) -> None:

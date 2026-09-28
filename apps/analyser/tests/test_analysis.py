@@ -32,6 +32,18 @@ def test_incident_analysis_and_response(client):
     assert response.json()["execution_status"] == "recommendation_only"
 
 
+def test_versioned_incident_route_and_pagination(client):
+    create_incident(client)
+    response = client.get("/api/v1/incidents?limit=1&offset=0")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
+
+def test_incident_list_rejects_unbounded_page_size(client):
+    response = client.get("/api/incidents?limit=201")
+    assert response.status_code == 422
+
+
 def test_scenario_comparison(client):
     incident = create_incident(client)
     comparison = client.post(

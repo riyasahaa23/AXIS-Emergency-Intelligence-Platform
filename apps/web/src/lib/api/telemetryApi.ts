@@ -9,5 +9,5 @@ import type { TelemetrySummary } from '../types';
 import { MOCK_TELEMETRY } from '../mock/scenarios';
 
 export async function fetchTelemetry(): Promise<TelemetrySummary> {
-  return apiFetch<TelemetrySummary>('/api/telemetry', MOCK_TELEMETRY);
+  return apiFetch<TelemetrySummary>('/api/data/telemetry', MOCK_TELEMETRY);
 }

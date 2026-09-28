@@ -52,9 +52,17 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("x-request-id") or str(uuid4())
         request.state.request_id = request_id
 
-        if request.url.path.startswith("/api/"):
+        # Preserve the documented versioned API contract while the internal
+        # routers continue to use the stable canonical path.
+        if request.url.path.startswith("/api/v1/"):
+            request.scope["path"] = "/api/" + request.url.path.removeprefix("/api/v1/")
+
+        if request.scope["path"].startswith("/api/"):
             identity = request.client.host if request.client else "unknown"
-            allowed, retry_after = await self._allow(identity)
+            try:
+                allowed, retry_after = await self._allow(identity)
+            except RuntimeError:
+                return self._denied(request_id, "RATE_LIMIT_UNAVAILABLE", "Rate limiting is temporarily unavailable", 503)
             if not allowed:
                 response = self._denied(request_id, "RATE_LIMITED", "Request rate limit exceeded", 429)
                 response.headers["retry-after"] = str(retry_after)
@@ -110,7 +118,9 @@ class GatewayMiddleware(BaseHTTPMiddleware):
                 if count > self.settings.rate_limit_per_minute:
                     return False, 60 - (int(time.time()) % 60)
                 return True, 0
-            except Exception:  # noqa: BLE001 - local limiter is the safe fallback
+            except Exception:  # noqa: BLE001 - local fallback is explicitly opt-in
+                if self.settings.environment == "production" or not self.settings.allow_in_memory_fallback:
+                    raise RuntimeError("Redis is required for API rate limiting in this runtime") from None
                 return self.limiter.allow(identity)
         return self.limiter.allow(identity)
 

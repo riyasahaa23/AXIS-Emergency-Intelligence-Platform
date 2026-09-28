@@ -12,6 +12,27 @@ from app.ingestion.scheduler import IngestionScheduleCreate
 router = APIRouter(prefix="/api/data", tags=["data-ingestion"])
 
 
+@router.get("/telemetry", dependencies=[Depends(require_scope("read"))])
+async def telemetry_summary(request: Request):
+    """Return the operational summary from the configured incident store."""
+    store = request.app.state.incident_manager.store
+    incidents = store.list(limit=200, offset=0)
+    incidents = await incidents if hasattr(incidents, "__await__") else incidents
+    return {
+        "satellitesOnline": 0,
+        "weatherFeedsStatus": "Degraded" if not incidents else "Live",
+        "groundSensors": 0,
+        "dataSources": len(SOURCE_REGISTRY),
+        "activeIncidents": sum(1 for incident in incidents if incident.status.value == "active"),
+        "highRisk": sum(1 for incident in incidents if incident.severity >= 60),
+        "countriesAffected": 0,
+        "peopleAffected": str(sum(incident.population for incident in incidents)),
+        "responseTeams": 0,
+        "activeShelters": 0,
+        "criticalResourcesPct": 0,
+    }
+
+
 @router.get("/sources", dependencies=[Depends(require_scope("read"))])
 async def list_sources():
     return list(SOURCE_REGISTRY.values())

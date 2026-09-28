@@ -32,8 +32,8 @@ class InMemoryIncidentStore:
         except KeyError as exc:
             raise IncidentNotFoundError(incident_id) from exc
 
-    def list(self) -> list[Incident]:
-        return list(self._incidents.values())
+    def list(self, limit: int = 100, offset: int = 0) -> list[Incident]:
+        return list(self._incidents.values())[offset : offset + limit]
 
     def update(self, incident_id: str, data: IncidentUpdate) -> Incident:
         incident = self.get(incident_id)

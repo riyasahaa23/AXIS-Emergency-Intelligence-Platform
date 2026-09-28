@@ -89,7 +89,7 @@ class IncidentRepository(Protocol):
     def get(self, incident_id: str) -> Incident:
         ...
 
-    def list(self) -> list[Incident]:
+    def list(self, limit: int = 100, offset: int = 0) -> list[Incident]:
         ...
 
 
@@ -136,11 +136,14 @@ class PostgresIncidentRepository:
             raise IncidentNotFoundError(incident_id)
         return self._incident(row)
 
-    async def list(self) -> list[Incident]:
+    async def list(self, limit: int = 100, offset: int = 0) -> list[Incident]:
         from sqlalchemy import text
 
         async with self.engine.connect() as connection:
-            result = await connection.execute(text("SELECT * FROM incidents ORDER BY created_at"))
+            result = await connection.execute(
+                text("SELECT * FROM incidents ORDER BY created_at LIMIT :limit OFFSET :offset"),
+                {"limit": limit, "offset": offset},
+            )
             return [self._incident(row) for row in result.mappings().all()]
 
     async def update(self, incident_id: str, data: IncidentUpdate) -> Incident:

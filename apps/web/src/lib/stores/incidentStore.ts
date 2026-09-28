@@ -2,8 +2,9 @@ import { writable, derived } from 'svelte/store';
 import { MOCK_INCIDENTS } from '../mock/incidents';
 import type { HazardIncident, HazardType, SeverityLevel } from '../types';
 import { fetchIncidents } from '../api/incidentsApi';
+import { MOCK_FALLBACK_ENABLED } from '../api/client';
 
-export const incidents = writable<HazardIncident[]>(MOCK_INCIDENTS);
+export const incidents = writable<HazardIncident[]>(MOCK_FALLBACK_ENABLED ? MOCK_INCIDENTS : []);
 // Initial default selected incident: inc-01 (Severe Flooding, Bangladesh)
 export const selectedIncidentId = writable<string | null>(null);
 
@@ -112,15 +113,16 @@ export function clearIncidentSelection() {
 
 /**
  * Rehydrates incidents store from live backend when available,
- * gracefully preserving mock fallback on failure.
+ * preserving mock fallback only when explicitly enabled for a local demo.
  */
 export async function syncIncidentsFromBackend() {
   try {
     const data = await fetchIncidents();
-    if (Array.isArray(data) && data.length > 0) {
+    if (Array.isArray(data)) {
       incidents.set(data);
     }
   } catch (err) {
-    console.warn('[incidentStore] sync failed, retaining fallback state:', err);
+    if (!MOCK_FALLBACK_ENABLED) incidents.set([]);
+    console.warn('[incidentStore] sync failed:', err);
   }
 }

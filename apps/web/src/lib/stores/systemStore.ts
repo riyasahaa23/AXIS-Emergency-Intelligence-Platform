@@ -1,10 +1,26 @@
 import { writable } from 'svelte/store';
 import { MOCK_TELEMETRY } from '../mock/scenarios';
+import { MOCK_FALLBACK_ENABLED } from '../api/client';
+import { fetchTelemetry } from '../api/telemetryApi';
 import type { TelemetrySummary } from '../types';
 
-export const currentUtcTime = writable<string>('Oct 26, 2024 14:32:18 UTC');
+const EMPTY_TELEMETRY: TelemetrySummary = {
+  satellitesOnline: 0,
+  weatherFeedsStatus: 'Offline',
+  groundSensors: 0,
+  dataSources: 0,
+  activeIncidents: 0,
+  highRisk: 0,
+  countriesAffected: 0,
+  peopleAffected: '0',
+  responseTeams: 0,
+  activeShelters: 0,
+  criticalResourcesPct: 0
+};
+
+export const currentUtcTime = writable<string>(new Date().toUTCString());
 export const activeNavSection = writable<string>('global');
-export const telemetry = writable<TelemetrySummary>(MOCK_TELEMETRY);
+export const telemetry = writable<TelemetrySummary>(MOCK_FALLBACK_ENABLED ? MOCK_TELEMETRY : EMPTY_TELEMETRY);
 export const isAiSpeaking = writable<boolean>(false);
 export const audioTranscriptionActive = writable<boolean>(false);
 
@@ -77,6 +93,10 @@ export function toggleIncidentTelemetry() {
 
 // Live UTC time updater
 if (typeof window !== 'undefined') {
+  fetchTelemetry()
+    .then((summary) => telemetry.set(summary))
+    .catch((error) => console.warn('[systemStore] telemetry unavailable:', error));
+
   setInterval(() => {
     const now = new Date();
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];

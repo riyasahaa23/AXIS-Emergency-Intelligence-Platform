@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.auth.dependencies import require_scope
 from app.core.events import DomainEvent
@@ -19,8 +19,12 @@ async def create_incident(payload: IncidentCreate, request: Request) -> Incident
 
 
 @router.get("", response_model=list[Incident], dependencies=[Depends(require_scope("read"))])
-async def list_incidents(request: Request) -> list[Incident]:
-    result = manager(request).store.list()
+async def list_incidents(
+    request: Request,
+    limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+) -> list[Incident]:
+    result = manager(request).store.list(limit=limit, offset=offset)
     return await result if hasattr(result, "__await__") else result
 
 

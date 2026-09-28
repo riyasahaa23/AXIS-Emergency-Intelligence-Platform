@@ -3,10 +3,8 @@ import { normalizeIncident } from './incidentsApi';
 import { MOCK_INCIDENTS } from '../mock/incidents';
 
 describe('incidentsApi - normalizeIncident', () => {
-  it('returns default incident when payload is null or undefined', () => {
-    const result = normalizeIncident(null);
-    expect(result).toBeDefined();
-    expect(result.id).toBe(MOCK_INCIDENTS[0].id);
+  it('rejects empty payloads instead of fabricating an incident', () => {
+    expect(() => normalizeIncident(null)).toThrow('Incident payload is empty');
   });
 
   it('preserves existing canonical HazardIncident format intact', () => {
@@ -37,6 +35,9 @@ describe('incidentsApi - normalizeIncident', () => {
     expect(normalized.severity).toBe('critical'); // >= 80 is critical
     expect(normalized.affectedPopulation).toContain('1.5M affected');
     expect(normalized.affectedPopulationNum).toBe(1500000);
+    expect(normalized.displacedPopulationNum).toBe(0);
+    expect(normalized.roadsAffected).toBe(0);
+    expect(normalized.districtsAffected).toBe(0);
     expect(normalized.riskScore).toBe(85);
     expect(normalized.overview).toBeDefined();
     expect(normalized.details).toBeDefined();

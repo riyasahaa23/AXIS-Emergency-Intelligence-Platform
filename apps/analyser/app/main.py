@@ -124,6 +124,7 @@ async def lifespan(application: FastAPI):
     application.state.source_client.copernicus_ems_url = settings.copernicus_ems_url
     application.state.source_client.copernicus_land_cover_stac_url = settings.copernicus_land_cover_stac_url
     application.state.ingestion_service = IngestionService(application.state.source_client, database_engine, events)
+    application.state.ingestion_service.settings = settings
     application.state.ingestion_worker = IngestionWorker(application.state.ingestion_service, settings.redis_url)
     await application.state.ingestion_worker.start()
     application.state.ingestion_scheduler = IngestionScheduler(application.state.ingestion_worker, database_engine, settings.scheduler_poll_seconds)
