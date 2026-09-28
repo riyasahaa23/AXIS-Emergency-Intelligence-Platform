@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     scheduler_poll_seconds: int = 5
     rate_limit_per_minute: int = 120
     websocket_rate_limit_per_minute: int = 20
+    cors_allowed_origins: str = "http://localhost:5180,http://127.0.0.1:5180"
     object_storage_dir: str = "data/object-store"
     object_storage_backend: str = "local"
     object_storage_bucket: str = "axis"
@@ -65,6 +66,11 @@ def get_settings() -> Settings:
     return Settings()
 
 
+def get_cors_origins(settings: Settings) -> list[str]:
+    """Return explicit browser origins allowed to call the API."""
+    return [origin.strip() for origin in settings.cors_allowed_origins.split(",") if origin.strip()]
+
+
 def validate_runtime_settings(settings: Settings) -> None:
     if settings.llm_provider not in {"none", "ollama", "pydantic_ai"}:
         raise RuntimeError("AXIS_LLM_PROVIDER must be one of: none, ollama, pydantic_ai")
@@ -78,3 +84,5 @@ def validate_runtime_settings(settings: Settings) -> None:
         raise RuntimeError("Production requires AXIS_API_KEY_READONLY, AXIS_API_KEY_OPERATOR or AXIS_API_KEY_ADMIN")
     if settings.environment == "production" and settings.allow_in_memory_fallback:
         raise RuntimeError("Production must disable AXIS_ALLOW_IN_MEMORY_FALLBACK")
+    if settings.environment == "production" and not get_cors_origins(settings):
+        raise RuntimeError("Production requires at least one AXIS_CORS_ALLOWED_ORIGINS entry")

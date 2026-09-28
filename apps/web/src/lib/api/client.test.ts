@@ -9,7 +9,7 @@ describe('client - apiFetch and probeBackend fallback architecture', () => {
   });
 
   it('falls back to static fallback value when backend is unreachable', async () => {
-    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network error'));
 
     const fallbackData = [{ id: 'mock-1', title: 'Fallback Incident' }];
     const result = await apiFetch('/api/v1/incidents', fallbackData);
@@ -20,7 +20,7 @@ describe('client - apiFetch and probeBackend fallback architecture', () => {
   });
 
   it('evaluates functional fallback when provided as a generator function', async () => {
-    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('ECONNREFUSED'));
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('ECONNREFUSED'));
 
     const fallbackFn = () => ({ status: 'generated-fallback', timestamp: 12345 });
     const result = await apiFetch('/api/v1/telemetry', fallbackFn);
@@ -31,7 +31,7 @@ describe('client - apiFetch and probeBackend fallback architecture', () => {
   it('returns real API response when backend is online and responds with 200 OK', async () => {
     const mockApiResponse = { status: 'healthy', data: [1, 2, 3] };
 
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => mockApiResponse

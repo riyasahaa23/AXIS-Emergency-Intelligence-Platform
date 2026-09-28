@@ -6,7 +6,7 @@ export type ResponseMode =
   | 'shelters';
 
 export type PrioritySeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-export type TeamStatus = 'Active' | 'En Route' | 'Delayed' | 'Standby';
+export type TeamStatus = 'Active' | 'En Route' | 'Delayed' | 'Standby' | 'DEPLOYED';
 export type OperationPriority = 'High Priority' | 'Medium Priority' | 'Low Priority';
 export type ShelterStatus = 'Accepting' | 'Near Capacity' | 'Full';
 export type RouteStatus = 'Clear' | 'Congested' | 'Flooded' | 'Alternative';

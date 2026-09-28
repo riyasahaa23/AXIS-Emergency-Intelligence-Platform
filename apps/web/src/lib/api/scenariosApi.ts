@@ -29,18 +29,18 @@ export async function runSimulation(
   scenarioDef: HazardScenarioDefinition,
   params: Record<string, number>,
   factors: Record<string, boolean>,
-  extraFactorIds: string[]
+  timelineDay: number = 7
 ): Promise<ScenarioResultData> {
   return apiFetch<ScenarioResultData>(
     '/api/scenarios/simulate',
-    () => calculateScenarioResults(scenarioDef, params, factors, extraFactorIds),
+    () => calculateScenarioResults(scenarioDef.hazardType, params, factors, timelineDay as any),
     {
       method: 'POST',
       body: JSON.stringify({
         hazardType: scenarioDef.hazardType,
         parameters: params,
         factors,
-        extraFactorIds
+        timelineDay
       })
     }
   );

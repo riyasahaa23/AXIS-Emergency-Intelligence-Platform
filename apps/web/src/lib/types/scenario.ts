@@ -1,6 +1,15 @@
 export type ScenarioViewTab = 'builder' | 'library' | 'comparison' | 'results';
 
-export type ScenarioTimelineDay = 1 | 3 | 7 | 14 | 30;
+export type ScenarioTimelineDay = 1 | 3 | 7 | 14 | 30 | 'D+1' | 'D+3' | 'D+7' | 'D+14' | 'D+30';
+
+export interface ScenarioResultData {
+  expansionMultiplier: number;
+  simulatedMetrics: ScenarioMetricSet;
+  diff: ScenarioComparisonDiff;
+  insights: ScenarioInsightKPIs;
+  riskAnalysis: ScenarioRiskAnalysis;
+  responseNeeds: ScenarioResponseNeedItem[];
+}
 
 export type ScenarioDetailTab = 
   | 'impact_projection'
@@ -107,6 +116,10 @@ export interface SavedScenario {
   scenarioRisk?: number;
   riskDelta?: number;
   isSimulated?: boolean;
+  tags?: string[];
+  timelineDay?: ScenarioTimelineDay;
+  metrics?: ScenarioMetricSet;
+  comparison?: Record<string, number>;
 }
 
 export interface SimulatedScenarioResponseContext {

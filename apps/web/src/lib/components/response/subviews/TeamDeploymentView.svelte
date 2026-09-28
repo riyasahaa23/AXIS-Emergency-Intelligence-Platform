@@ -12,6 +12,12 @@
   let filterStatus: 'All' | TeamStatus = 'All';
   let searchTerm = '';
 
+  function setFilterStatus(value: string) {
+    if (value === 'All' || value === 'Active' || value === 'En Route' || value === 'Delayed' || value === 'Standby') {
+      filterStatus = value;
+    }
+  }
+
   $: filteredTeams = $responseTeams.filter((t) => {
     const matchesFilter = filterStatus === 'All' || t.status === filterStatus;
     const matchesSearch =
@@ -70,7 +76,7 @@
       <div class="flex items-center gap-1 bg-black/30 p-1 rounded-xl border border-white/10">
         {#each ['All', 'Active', 'En Route', 'Delayed', 'Standby'] as st}
           <button
-            on:click={() => filterStatus = st}
+            on:click={() => setFilterStatus(st)}
             class="px-2.5 py-1 rounded-lg text-[10px] font-mono transition-all cursor-pointer {
               filterStatus === st
                 ? 'bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/40'

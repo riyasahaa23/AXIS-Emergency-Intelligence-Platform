@@ -14,11 +14,7 @@ export { MOCK_SCENARIOS, MOCK_TELEMETRY, MOCK_UPDATES } from './scenarios';
 // 3. Analysis Geospatial & Scenarios
 export {
   getAnalysisData,
-  generateAnalysisData,
-  generateImpactProjection,
-  generateRainfallForecast,
-  generateInfrastructureImpact,
-  generateKeyFindings
+  MOCK_ANALYSIS_DATABASE
 } from './analysis';
 
 export {

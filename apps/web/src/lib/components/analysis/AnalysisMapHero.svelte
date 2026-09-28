@@ -981,7 +981,7 @@
   on:wheel={handleWheel}
   class="relative w-full h-full rounded-2xl bg-[#030914] overflow-hidden select-none cursor-grab active:cursor-grabbing border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.7)]"
 >
-  <canvas bind:this={canvasEl} class="w-full h-full block" />
+  <canvas bind:this={canvasEl} class="w-full h-full block"></canvas>
 
   <!-- Fast Tactical Intelligence Transition HUD Pill -->
   {#if $isTransitioningHazard}

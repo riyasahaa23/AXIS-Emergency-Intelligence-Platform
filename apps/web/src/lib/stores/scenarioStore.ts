@@ -48,7 +48,7 @@ selectedIncident.subscribe((inc) => {
   if (inc.type === 'cyclone') targetHazard = 'cyclone';
   else if (inc.type === 'wildfire') targetHazard = 'wildfire';
   else if (inc.type === 'earthquake') targetHazard = 'earthquake';
-  else if (inc.type === 'compound') targetHazard = 'multi_hazard';
+  else if (inc.type === 'multi_hazard' || (inc.type as string) === 'compound') targetHazard = 'multi_hazard';
   else if (inc.type === 'flood') targetHazard = 'flood';
 
   if (currentHazard !== targetHazard) {
@@ -62,7 +62,7 @@ selectedIncident.subscribe((inc) => {
     scenarioFactors.set(newFactors);
     scenarioActiveExtraFactorIds.set([]);
     activeScenarioPresetId.set('baseline');
-    activeScenarioName.set(`${inc.name || inc.title} - Counterfactual Simulation`);
+    activeScenarioName.set(`${inc.name} - Counterfactual Simulation`);
   }
 });
 
@@ -299,7 +299,7 @@ export function applyScenarioToResponse() {
     scenarioId: get(activeSavedScenarioId) || `scen-${Date.now()}`,
     scenarioName,
     incidentId: inc?.id || config.incidentId,
-    incidentName: inc?.title || config.incidentName,
+    incidentName: inc?.name || config.incidentName,
     hazardType: hazard,
     riskScore,
     riskDelta,

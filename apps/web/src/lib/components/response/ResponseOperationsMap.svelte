@@ -87,7 +87,7 @@
   }
 
   // Pre-projected city labels for Bangladesh
-  const cities = [
+  const cities: Array<{ name: string; coords: [number, number]; isCapital?: boolean }> = [
     { name: 'Dhaka', coords: [90.41, 23.81], isCapital: true },
     { name: 'Mymensingh', coords: [90.40, 24.75] },
     { name: 'Sylhet', coords: [91.87, 24.89] },

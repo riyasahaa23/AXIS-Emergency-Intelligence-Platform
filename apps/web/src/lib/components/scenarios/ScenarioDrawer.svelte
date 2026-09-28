@@ -52,7 +52,7 @@
     on:click={closeScenarioDrawer}
     class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm cursor-pointer"
     aria-label="Close scenario drawer backdrop"
-  />
+  ></div>
 
   <!-- Floating Bottom Slide-up Drawer -->
   <aside

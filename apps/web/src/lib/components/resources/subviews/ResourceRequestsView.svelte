@@ -83,7 +83,7 @@
           Cancel
         </button>
         <button
-          on:click={() => handleRejectSubmit(rejectingRequestId)}
+          on:click={() => rejectingRequestId && handleRejectSubmit(rejectingRequestId)}
           class="px-3 py-1 rounded-lg bg-rose-500 text-white font-bold cursor-pointer"
         >
           Confirm Rejection

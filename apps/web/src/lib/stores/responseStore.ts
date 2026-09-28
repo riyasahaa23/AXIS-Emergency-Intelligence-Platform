@@ -33,7 +33,7 @@ selectedIncident.subscribe((inc) => {
   if (inc.type === 'cyclone') targetHazard = 'cyclone';
   else if (inc.type === 'wildfire') targetHazard = 'wildfire';
   else if (inc.type === 'earthquake') targetHazard = 'earthquake';
-  else if (inc.type === 'compound') targetHazard = 'multi_hazard';
+  else if (inc.type === 'multi_hazard' || (inc.type as string) === 'compound') targetHazard = 'multi_hazard';
   else if (inc.type === 'flood') targetHazard = 'flood';
 
   if (currentHazard !== targetHazard) {

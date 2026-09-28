@@ -42,7 +42,7 @@ export interface ResourceItem {
   status: ResourceStatus;
   capacity: string; // e.g. '8 personnel', '15 tons', '20 beds'
   capacityNum?: number;
-  assignedTo: string; // e.g. '—', 'Rescue Op-01', 'Supply Run-03'
+  assignedTo?: string; // e.g. '—', 'Rescue Op-01', 'Supply Run-03'
   fuelOrStockPct: number; // 0 - 100
   condition: 'Excellent' | 'Good' | 'Needs Service' | 'Critical';
   hoursOperated?: number;
@@ -52,7 +52,7 @@ export interface ResourceItem {
   eta?: string;
   range?: string;
   beds?: number;
-  medicalStaff?: number;
+  medicalStaff?: number | string;
   supplies?: string;
   currentStock?: string;
   incoming?: string;
@@ -60,6 +60,8 @@ export interface ResourceItem {
   occupied?: number;
   available?: number;
   storageCapacity?: string;
+  subtype?: string;
+  fuelBattery?: number;
 }
 
 export interface ResourceRequest {

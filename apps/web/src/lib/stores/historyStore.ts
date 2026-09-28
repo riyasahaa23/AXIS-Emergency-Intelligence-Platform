@@ -257,12 +257,19 @@ let eventCounter = 0;
 
 export function recordHistoryEvent(
   category: HistoryEventCategory,
-  action: string,
-  target: string,
-  result: string,
-  severity: 'critical' | 'warning' | 'info' | 'success' = 'info',
-  actor: string = 'COMMANDER'
+  first: string,
+  second: string,
+  third: string,
+  fourth: string,
+  fifth?: string
 ) {
+  const severities = new Set(['critical', 'warning', 'info', 'success']);
+  const newOrder = fifth !== undefined && severities.has(fifth);
+  const actor = newOrder ? first : (fifth || 'COMMANDER');
+  const action = newOrder ? second : first;
+  const target = newOrder ? third : second;
+  const result = newOrder ? fourth : third;
+  const severity = (newOrder ? fifth : fourth) as 'critical' | 'warning' | 'info' | 'success';
   const now = new Date();
   const timeStr = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}:${now.getUTCSeconds().toString().padStart(2, '0')} UTC`;
 

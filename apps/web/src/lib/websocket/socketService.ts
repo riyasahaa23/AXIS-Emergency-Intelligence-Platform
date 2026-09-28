@@ -8,6 +8,9 @@
 
 import { writable } from 'svelte/store';
 
+const MOCK_FALLBACK_ENABLED = import.meta.env?.VITE_ENABLE_MOCK_FALLBACK === 'true'
+  || (import.meta.env?.DEV === true && import.meta.env?.VITE_ENABLE_MOCK_FALLBACK !== 'false');
+
 export type SocketStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'FALLBACK_SIMULATION';
 
 export interface TelemetryPacket {
@@ -90,6 +93,10 @@ class SocketService {
   }
 
   private enterFallback() {
+    if (!MOCK_FALLBACK_ENABLED) {
+      this.status.set('DISCONNECTED');
+      return;
+    }
     this.status.set('FALLBACK_SIMULATION');
     this.startFallbackTicker();
   }

@@ -5,7 +5,7 @@ import { fetchIncidents } from '../api/incidentsApi';
 
 export const incidents = writable<HazardIncident[]>(MOCK_INCIDENTS);
 // Initial default selected incident: inc-01 (Severe Flooding, Bangladesh)
-export const selectedIncidentId = writable<string | null>('inc-01');
+export const selectedIncidentId = writable<string | null>(null);
 
 // Filtering & Search Stores
 export const activeSeverityFilter = writable<SeverityLevel | 'all'>('all');
@@ -18,18 +18,13 @@ export const activeDetailTab = writable<'overview' | 'impact' | 'forecast' | 're
 export const timelineStep = writable<string>('NOW'); // '-24h' | '-12h' | 'NOW' | '+24h' | '+48h' | '+72h'
 
 // Globe Focus for planetary transitions
-export const globeFocusTarget = writable<{ lat: number; lng: number; zoom: number; duration?: number } | null>({
-  lat: 23.685,
-  lng: 90.356,
-  zoom: 1.3,
-  duration: 1.2
-});
+export const globeFocusTarget = writable<{ lat: number; lng: number; zoom: number; duration?: number } | null>(null);
 
 export const selectedIncident = derived(
   [incidents, selectedIncidentId],
   ([$incidents, $selectedId]) => {
-    if (!$selectedId) return $incidents[0] || null;
-    return $incidents.find((inc) => inc.id === $selectedId) || $incidents[0] || null;
+    if (!$selectedId) return null;
+    return $incidents.find((inc) => inc.id === $selectedId) || null;
   }
 );
 

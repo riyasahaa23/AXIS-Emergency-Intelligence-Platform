@@ -33,6 +33,7 @@ export interface HazardIncident {
     temperature?: string;
     shelterDemand?: string;
     roadAccessibility?: string;
+    riverLevelMeters?: number;
     description: string;
   };
   overview?: {

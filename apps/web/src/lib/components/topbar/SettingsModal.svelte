@@ -42,8 +42,16 @@
     renderQuality = val;
   }
 
+  function chooseRenderQuality(val: string) {
+    if (val === 'ultra' || val === 'high' || val === 'efficient') setRenderQuality(val);
+  }
+
   function setTelemetryInterval(val: '1s' | '5s' | '10s') {
     telemetryInterval = val;
+  }
+
+  function chooseTelemetryInterval(val: string) {
+    if (val === '1s' || val === '5s' || val === '10s') setTelemetryInterval(val);
   }
 </script>
 
@@ -104,7 +112,7 @@
             ] as q}
               <button
                 type="button"
-                on:click={() => setRenderQuality(q.id)}
+                on:click={() => chooseRenderQuality(q.id)}
                 class="p-3 text-left rounded-lg border transition-all {renderQuality === q.id ? 'bg-[#00E5FF]/15 border-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.25)]' : 'bg-[#061425]/60 border-white/10 hover:border-white/20'}"
               >
                 <div class="text-xs font-bold text-white mb-1">{q.label}</div>
@@ -127,7 +135,7 @@
             ] as t}
               <button
                 type="button"
-                on:click={() => setTelemetryInterval(t.id)}
+                on:click={() => chooseTelemetryInterval(t.id)}
                 class="p-3 text-left rounded-lg border transition-all {telemetryInterval === t.id ? 'bg-[#3D7CFF]/15 border-[#3D7CFF] shadow-[0_0_15px_rgba(61,124,255,0.25)]' : 'bg-[#061425]/60 border-white/10 hover:border-white/20'}"
               >
                 <div class="text-xs font-bold text-white mb-1">{t.label}</div>

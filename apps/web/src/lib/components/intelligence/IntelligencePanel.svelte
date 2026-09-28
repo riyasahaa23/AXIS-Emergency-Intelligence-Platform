@@ -565,6 +565,7 @@
               <span class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
               <span class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" style="animation-delay: 0.2s;"></span>
               <span class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" style="animation-delay: 0.4s;"></span>
+            </span>
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 <script lang="ts">
   import TopBar from '$components/topbar/TopBar.svelte';
   import NavRail from '$components/navigation/NavRail.svelte';
-  import GlobeView from '$three/GlobeView.svelte';
   import CockpitFrame from '$components/cockpit/CockpitFrame.svelte';
   import QuickTelemetry from '$components/widgets/QuickTelemetry.svelte';
   import MonitoringBadge from '$components/widgets/MonitoringBadge.svelte';
@@ -28,9 +27,15 @@
   import { activeNavSection } from '$stores/systemStore';
   import { onMount } from 'svelte';
 
+  let GlobeView: typeof import('$three/GlobeView.svelte').default | null = null;
+
   const VALID_NAV_SECTIONS = ['global', 'incidents', 'analysis', 'scenarios', 'response', 'resources', 'comms', 'history'];
 
   onMount(() => {
+    import('$three/GlobeView.svelte').then((module) => {
+      GlobeView = module.default;
+    });
+
     syncIncidentsFromBackend();
 
     // Bidirectional URL deep-linking: Read initial section from hash or query params
@@ -128,7 +133,9 @@
       {:else}
         <!-- 3D Interactive WebGL Globe (Hero Element) -->
         <div class="absolute inset-0 z-0">
-          <GlobeView />
+          {#if GlobeView}
+            <svelte:component this={GlobeView} />
+          {/if}
         </div>
 
         <!-- Cockpit HUD Frame Overlay (curved glass viewport frame) -->

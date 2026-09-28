@@ -8,6 +8,9 @@
   ],
   "scripts": {
     "dev": "turbo dev",
+    "dev:all": "bash scripts/dev-all.sh",
+    "dev:api": "uv run --directory apps/analyser uvicorn app.main:app --host 127.0.0.1 --port 8000",
+    "dev:web": "npm run dev --workspace=@axis/web",
     "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",

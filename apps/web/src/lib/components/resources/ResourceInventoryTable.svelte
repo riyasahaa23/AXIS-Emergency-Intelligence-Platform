@@ -82,7 +82,7 @@
         item.type.toLowerCase().includes(q) ||
         item.location.toLowerCase().includes(q) ||
         item.status.toLowerCase().includes(q) ||
-        item.assignedTo.toLowerCase().includes(q);
+        item.assignedTo?.toLowerCase().includes(q);
       if (!match) return false;
     }
 

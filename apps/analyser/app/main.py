@@ -3,6 +3,7 @@ from inspect import isawaitable
 
 import httpx
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import websocket
 from app.api.routes import (
@@ -16,7 +17,7 @@ from app.api.routes import (
     scenarios,
 )
 from app.auth.gateway import install_gateway
-from app.core.config import get_settings, validate_runtime_settings
+from app.core.config import get_cors_origins, get_settings, validate_runtime_settings
 from app.core.events import InMemoryEventPublisher
 from app.core.logging import configure_logging
 from app.core.metrics import Metrics, instrument_request
@@ -150,6 +151,15 @@ app = FastAPI(
 
 app.state.metrics = Metrics()
 
+settings = get_settings()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_cors_origins(settings),
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["Accept", "Content-Type", "Authorization", "X-API-Key", "X-Request-ID"],
+)
+
 
 @app.middleware("http")
 async def request_metrics(request, call_next):
@@ -160,7 +170,7 @@ async def request_metrics(request, call_next):
     response.headers.setdefault("permissions-policy", "camera=(), microphone=(), geolocation=()")
     return response
 
-install_gateway(app, get_settings())
+install_gateway(app, settings)
 
 app.include_router(health.router)
 app.include_router(incidents.router)

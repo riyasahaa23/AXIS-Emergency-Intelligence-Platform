@@ -823,7 +823,12 @@ export function calculateScenarioResults(
     3: 1.24,
     7: 1.58,
     14: 1.84,
-    30: 2.12
+    30: 2.12,
+    'D+1': 1.08,
+    'D+3': 1.24,
+    'D+7': 1.58,
+    'D+14': 1.84,
+    'D+30': 2.12
   };
   const temporalScale = timelineMultipliers[timelineDay] || 1.58;
 

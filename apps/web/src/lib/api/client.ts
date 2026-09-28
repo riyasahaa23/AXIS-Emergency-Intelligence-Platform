@@ -8,12 +8,17 @@
 import { writable } from 'svelte/store';
 
 export interface DataFeedStatus {
-  source: 'REAL_API' | 'SIMULATED_MOCK';
+  source: 'REAL_API' | 'SIMULATED_MOCK' | 'UNAVAILABLE';
   isLive: boolean;
   endpoint: string;
   latencyMs: number;
   lastSync: string;
 }
+
+// Mocks are available for local demos, but production must not present
+// synthetic data as live operational data.
+export const MOCK_FALLBACK_ENABLED = import.meta.env?.VITE_ENABLE_MOCK_FALLBACK === 'true'
+  || (import.meta.env?.DEV === true && import.meta.env?.VITE_ENABLE_MOCK_FALLBACK !== 'false');
 
 // Configurable backend URL with Vite environment variable support
 export const BACKEND_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
@@ -23,9 +28,9 @@ export const BACKEND_URL = (typeof import.meta !== 'undefined' && import.meta.en
       : 'http://127.0.0.1:8000');
 
 export const dataFeedStatus = writable<DataFeedStatus>({
-  source: 'SIMULATED_MOCK',
+  source: MOCK_FALLBACK_ENABLED ? 'SIMULATED_MOCK' : 'UNAVAILABLE',
   isLive: false,
-  endpoint: 'AUTONOMOUS FALLBACK ENGINE',
+  endpoint: MOCK_FALLBACK_ENABLED ? 'AUTONOMOUS FALLBACK ENGINE' : `${BACKEND_URL}/health unavailable`,
   latencyMs: 8,
   lastSync: new Date().toISOString()
 });
@@ -85,9 +90,9 @@ export async function probeBackend(force: boolean = false): Promise<boolean> {
   cachedProbeResult = false;
   lastProbeTime = now;
   dataFeedStatus.set({
-    source: 'SIMULATED_MOCK',
+    source: MOCK_FALLBACK_ENABLED ? 'SIMULATED_MOCK' : 'UNAVAILABLE',
     isLive: false,
-    endpoint: 'AUTONOMOUS FALLBACK ENGINE',
+    endpoint: MOCK_FALLBACK_ENABLED ? 'AUTONOMOUS FALLBACK ENGINE' : `${BACKEND_URL}/health unavailable`,
     latencyMs: 4,
     lastSync: new Date().toISOString()
   });
@@ -137,14 +142,32 @@ export async function apiFetch<T>(
           return data as T;
         }
       } else {
-        console.info(`[AXIS API] ${endpoint} returned status ${res.status}. Using fallback dataset.`);
+        console.info(
+          `[AXIS API] ${endpoint} returned status ${res.status}. `
+          + (MOCK_FALLBACK_ENABLED ? 'Using fallback dataset.' : 'Mock fallback is disabled.')
+        );
+        dataFeedStatus.update((status) => ({
+          ...status,
+          source: MOCK_FALLBACK_ENABLED ? 'SIMULATED_MOCK' : 'UNAVAILABLE',
+          isLive: false,
+          endpoint: `${url} returned ${res.status}; using fallback`,
+          lastSync: new Date().toISOString()
+        }));
       }
     } catch (err) {
-      console.warn(`[AXIS API] Network error on ${endpoint}:`, err, '— reverting to fallback.');
+      console.warn(
+        `[AXIS API] Network error on ${endpoint}:`,
+        err,
+        MOCK_FALLBACK_ENABLED ? '— reverting to fallback.' : '— mock fallback is disabled.'
+      );
     }
   }
 
-  // Gracefully resolve fallback data
+  if (!MOCK_FALLBACK_ENABLED) {
+    throw new Error(`[AXIS API] ${endpoint} unavailable and mock fallback is disabled`);
+  }
+
+  // Gracefully resolve fallback data in local demo mode.
   if (typeof fallback === 'function') {
     return await (fallback as () => T | Promise<T>)();
   }

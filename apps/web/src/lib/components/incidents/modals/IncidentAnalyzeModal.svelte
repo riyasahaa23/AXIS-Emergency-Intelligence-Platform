@@ -57,7 +57,7 @@
       if (inc.type === 'cyclone') targetHazard = 'cyclone';
       else if (inc.type === 'wildfire') targetHazard = 'wildfire';
       else if (inc.type === 'earthquake') targetHazard = 'earthquake';
-      else if (inc.type === 'compound') targetHazard = 'multi_hazard';
+      else if ((inc.type as string) === 'compound') targetHazard = 'multi_hazard';
       else targetHazard = 'flood';
 
       selectHazard(targetHazard);

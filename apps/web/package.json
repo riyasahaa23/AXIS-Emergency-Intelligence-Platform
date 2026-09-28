@@ -8,26 +8,28 @@
         "build": "vite build",
         "preview": "vite preview",
         "test": "vitest run",
-        "test:watch": "vitest"
+        "test:watch": "vitest",
+        "check": "svelte-check --tsconfig ./tsconfig.json"
     },
     "dependencies": {
         "clsx": "^2.1.1",
-        "lucide-svelte": "^0.395.0",
         "tailwind-merge": "^2.3.0",
         "three": "^0.165.0"
     },
     "devDependencies": {
-        "@sveltejs/adapter-auto": "^3.2.0",
-        "@sveltejs/kit": "^2.5.10",
-        "@sveltejs/vite-plugin-svelte": "^3.1.0",
+        "@sveltejs/adapter-node": "^5.5.7",
+        "@sveltejs/kit": "^2.63.0",
+        "@sveltejs/vite-plugin-svelte": "^4.0.4",
         "@types/three": "^0.165.0",
         "autoprefixer": "^10.4.19",
+        "execa": "^8.0.1",
         "postcss": "^8.4.38",
         "puppeteer-core": "^25.12.0",
-        "svelte": "^4.2.18",
+        "svelte": "^5.56.1",
+        "svelte-check": "^4.6.0",
         "tailwindcss": "^3.4.4",
         "typescript": "^5.4.5",
         "vite": "^5.2.12",
-        "vitest": "^1.6.1"
+        "vitest": "^3.2.7"
     }
 }

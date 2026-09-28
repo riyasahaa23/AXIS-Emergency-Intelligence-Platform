@@ -147,9 +147,15 @@
     const earthGeometry = new THREE.SphereGeometry(earthRadius, 64, 64);
 
     const textureLoader = new THREE.TextureLoader();
-    const dayTex = textureLoader.load('/earth_day.jpg', undefined, undefined, () => createDayTexture());
-    const nightTex = textureLoader.load('/earth_night.png', undefined, undefined, () => createNightTexture());
-    const cloudsTex = textureLoader.load('/earth_clouds.png', undefined, undefined, () => createCloudsTexture());
+    const dayTex = textureLoader.load('/earth_day.jpg', (tex) => {
+      tex.needsUpdate = true;
+    });
+    const nightTex = textureLoader.load('/earth_night.png', (tex) => {
+      tex.needsUpdate = true;
+    });
+    const cloudsTex = textureLoader.load('/earth_clouds.png', (tex) => {
+      tex.needsUpdate = true;
+    });
 
     dayTex.colorSpace = THREE.SRGBColorSpace;
     nightTex.colorSpace = THREE.SRGBColorSpace;
@@ -191,9 +197,10 @@
           vec4 dayColor = texture2D(dayTexture, vUv);
           vec4 nightColor = texture2D(nightTexture, vUv);
 
-          // Vivid night city lights with golden radiance
+          // Deep orbital ocean baseline so Earth is immediately luminous on frame 1
+          vec3 baseOcean = vec3(0.04, 0.14, 0.32);
+          vec3 dayGlow = max(dayColor.rgb * 1.75, baseOcean * 0.9);
           vec3 nightGlow = nightColor.rgb * 5.2;
-          vec3 dayGlow = dayColor.rgb * 1.75;
 
           vec3 finalColor = mix(nightGlow, dayGlow, dayIntensity);
 

@@ -295,18 +295,23 @@
     const newScenario: SavedScenario = {
       id: scenarioId,
       name: `${inc.name} — What-If (${riskDiff >= 0 ? '+' : ''}${riskDiff} Risk)`,
+      incidentId: inc.id,
       hazardType: inc.type,
       incidentName: inc.name,
       createdAt: 'Just now',
+      status: 'Simulated',
+      summary: `Projected risk ${newRisk}/100 with ${popFormatted} affected population`,
       tags: ['Neural Simulation', inc.type.toUpperCase(), `Risk ${newRisk}`],
       parameters: { ...paramValues },
       factors: { simulatedEscalation: riskDiff > 0 },
       timelineDay: 7,
       metrics: {
         affectedPopulation: popFormatted,
+        affectedPopulationRaw: newPopNum,
         displacedPopulation: `${Math.round(newPopNum * 0.45 / 1000)}K`,
-        affectedDistricts: Math.min(18, Math.max(1, inc.districtsAffected + Math.round(riskDiff * 0.1))),
-        roadsAffected: Math.max(2, inc.roadsAffected + Math.round(riskDiff * 0.3)),
+        displacedPopulationRaw: Math.round(newPopNum * 0.45),
+        affectedDistricts: Math.min(18, Math.max(1, (inc.districtsAffected ?? 0) + Math.round(riskDiff * 0.1))),
+        roadsAffected: Math.max(2, (inc.roadsAffected ?? 0) + Math.round(riskDiff * 0.3)),
         healthFacilities: 12,
         bridgesAffected: 4,
         riskLevel: newRisk >= 85 ? 'CRITICAL' : newRisk >= 65 ? 'HIGH' : 'MODERATE',
@@ -351,7 +356,7 @@
     comparisonScenarioA.set(base);
     comparisonScenarioB.set(current);
     closeIncidentSimulateModal();
-    activeScenarioView.set('compare');
+    activeScenarioView.set('comparison');
     activeNavSection.set('scenarios');
   }
 

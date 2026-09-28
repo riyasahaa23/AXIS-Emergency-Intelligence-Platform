@@ -62,7 +62,7 @@ apps/web/
 
 AXIS implements an **always-available, fail-safe architecture**. The application automatically probes the FastAPI backend (`http://localhost:8000/health`) with a 1.2-second timeout:
 - **Backend Online (`REAL_API`)**: Telemetry and incidents stream live from PostGIS / FastAPI with WebSocket updates (`ws://localhost:8000/api/ws`).
-- **Backend Offline (`SIMULATED_MOCK`)**: The UI seamlessly falls back to high-fidelity, physics-informed mock scenarios without throwing unhandled exceptions or breaking the UI.
+- **Backend Offline (`SIMULATED_MOCK`)**: Local development can fall back to high-fidelity, physics-informed mock scenarios. Production builds disable this fallback by default and expose the backend as unavailable instead of presenting synthetic data as live.
 
 ---
 

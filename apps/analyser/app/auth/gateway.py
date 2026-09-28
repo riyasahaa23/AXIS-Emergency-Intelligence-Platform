@@ -60,7 +60,7 @@ class GatewayMiddleware(BaseHTTPMiddleware):
                 response.headers["retry-after"] = str(retry_after)
                 return response
 
-        public = request.url.path in {"/health", "/health/live", "/metrics", "/docs", "/openapi.json"} or request.url.path.startswith("/redoc")
+        public = request.url.path in {"/health", "/health/live", "/health/ready", "/metrics", "/docs", "/openapi.json"} or request.url.path.startswith("/redoc")
         credential = _credential(request)
         context: AuthContext | None = None
         if _match(credential or "", settings.api_key_admin):
