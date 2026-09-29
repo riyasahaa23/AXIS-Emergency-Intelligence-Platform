@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-
 ActionType = Literal["note", "assign", "escalate", "acknowledge", "status_change"]
 
 

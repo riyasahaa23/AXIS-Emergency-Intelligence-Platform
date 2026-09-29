@@ -1,6 +1,7 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
-import json
 
 from app.audit.service import record_audit
 from app.auth.dependencies import require_scope

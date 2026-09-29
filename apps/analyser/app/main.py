@@ -9,17 +9,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import websocket
 from app.api.routes import (
     analysis,
+    audit,
     auth,
     data,
     health,
     incidents,
     jobs,
+    notifications,
     responses,
     satellite,
     scenarios,
     telemetry,
-    notifications,
-    audit,
 )
 from app.auth.gateway import install_gateway
 from app.auth.service import AuthService

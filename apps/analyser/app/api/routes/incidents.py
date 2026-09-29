@@ -4,15 +4,18 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
+from app.audit.service import record_audit
 from app.auth.dependencies import require_scope
-from app.core.events import DomainEvent
+from app.core.events import DomainEvent, publish_event
 from app.incident.state import IncidentNotFoundError, IncidentVersionConflictError
 from app.models.incident import Incident, IncidentCreate, IncidentUpdate
-from app.models.incident_actions import IncidentAction, IncidentActionCreate, Notification
-from app.safety.approvals import ApprovalRecord
+from app.models.incident_actions import (
+    IncidentAction,
+    IncidentActionCreate,
+    Notification,
+)
 from app.notifications.service import create_notification
-from app.core.events import DomainEvent, publish_event
-from app.audit.service import record_audit
+from app.safety.approvals import ApprovalRecord
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
@@ -148,8 +151,9 @@ async def create_incident_action(incident_id: str, payload: IncidentActionCreate
     request.app.state.incident_actions.append(action)
     engine = getattr(request.app.state, "database_engine", None)
     if engine is not None:
-        from sqlalchemy import text
         import json
+
+        from sqlalchemy import text
 
         async with engine.begin() as connection:
             await connection.execute(text("""INSERT INTO incident_actions

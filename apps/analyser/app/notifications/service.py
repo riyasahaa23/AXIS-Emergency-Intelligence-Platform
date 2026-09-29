@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from app.models.incident_actions import Notification
 import logging
 
+from app.models.incident_actions import Notification
 
 logger = logging.getLogger(__name__)
 
