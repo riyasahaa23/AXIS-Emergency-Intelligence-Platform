@@ -29,3 +29,20 @@ def test_incident_actions_and_notifications(client):
     marked = client.post(f"/api/notifications/{notification_id}/read")
     assert marked.status_code == 200
     assert marked.json()["read"] is True
+
+
+def test_response_plans_are_persisted_in_local_runtime(client):
+    incident_response = client.post(
+        "/api/incidents",
+        json={"title": "Workflow flood", "hazard_type": "flood", "location": "River sector", "severity": 80},
+    )
+    incident_id = incident_response.json()["id"]
+
+    plan_response = client.post(f"/api/incidents/{incident_id}/responses")
+    assert plan_response.status_code == 200
+    plan = plan_response.json()
+    assert plan["execution_status"] == "recommendation_only"
+
+    listed = client.get(f"/api/incidents/{incident_id}/response-plans")
+    assert listed.status_code == 200
+    assert listed.json()[0]["plan_id"] == plan["plan_id"]

@@ -102,6 +102,7 @@ async def lifespan(application: FastAPI):
     application.state.impact_engine = ImpactEngine()
     application.state.scenario_engine = ScenarioEngine(application.state.risk_engine)
     application.state.response_planner = ResponsePlanner()
+    application.state.response_plans = []
     application.state.validator = validate_score
     application.state.satellite_service = SatelliteService()
     application.state.source_client = SourceClient(database_engine, http_client=http_client)

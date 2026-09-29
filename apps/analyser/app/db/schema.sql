@@ -487,6 +487,17 @@ CREATE TABLE IF NOT EXISTS approvals (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS response_plans (
+    plan_id TEXT PRIMARY KEY,
+    incident_id TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'recommendation_only',
+    plan JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS response_plans_incident_idx ON response_plans(incident_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS audit_events (
     id BIGSERIAL PRIMARY KEY,
     request_id TEXT,
