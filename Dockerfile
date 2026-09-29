@@ -12,7 +12,7 @@ COPY apps/analyser/migrations ./migrations
 COPY apps/analyser/alembic.ini ./alembic.ini
 COPY apps/analyser/scripts ./scripts
 
-RUN pip install --no-cache-dir . \
+RUN pip install --no-cache-dir ".[database]" \
     && useradd --create-home --uid 10001 axis
 
 USER axis
