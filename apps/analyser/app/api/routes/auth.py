@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 
@@ -5,6 +7,7 @@ from app.auth.service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 SESSION_COOKIE = "axis_session"
+CSRF_COOKIE = "axis_csrf"
 
 
 class Credentials(BaseModel):
@@ -22,6 +25,15 @@ def set_session_cookie(response: Response, request: Request, token: str) -> None
         token,
         max_age=AuthService.session_days * 24 * 60 * 60,
         httponly=True,
+        secure=request.app.state.settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
+    response.set_cookie(
+        CSRF_COOKIE,
+        secrets.token_urlsafe(24),
+        max_age=AuthService.session_days * 24 * 60 * 60,
+        httponly=False,
         secure=request.app.state.settings.environment == "production",
         samesite="lax",
         path="/",
@@ -63,6 +75,7 @@ async def refresh(request: Request, response: Response):
 async def logout(request: Request, response: Response):
     await auth_service(request).logout(request.cookies.get(SESSION_COOKIE))
     response.delete_cookie(SESSION_COOKIE, path="/")
+    response.delete_cookie(CSRF_COOKIE, path="/")
     return {"ok": True}
 
 

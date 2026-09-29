@@ -34,6 +34,12 @@ def _session_token(request: Request) -> str | None:
     return request.cookies.get("axis_session")
 
 
+def _csrf_valid(request: Request) -> bool:
+    cookie = request.cookies.get("axis_csrf")
+    header = request.headers.get("x-csrf-token")
+    return bool(cookie and header and secrets.compare_digest(cookie, header))
+
+
 def _match(value: str, configured: str | None) -> bool:
     return bool(value and configured and secrets.compare_digest(value, configured))
 
@@ -118,6 +124,17 @@ class GatewayMiddleware(BaseHTTPMiddleware):
             response = self._denied(request_id, "AUTH_DENIED", "Authentication is required")
             await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "missing_credential"})
             return response
+
+        if (
+            request.method in {"POST", "PUT", "PATCH", "DELETE"}
+            and session_context is not None
+            and context is not None
+            and context.method == "session"
+            and request.url.path not in {"/api/auth/login", "/api/auth/register"}
+            and not _csrf_valid(request)
+        ):
+            request.state.auth = context
+            return self._denied(request_id, "CSRF_DENIED", "A valid CSRF token is required", 403)
 
         request.state.auth = context
         response = await call_next(request)

@@ -29,6 +29,12 @@ export const BACKEND_URL = (typeof import.meta !== 'undefined' && import.meta.en
   ? (import.meta.env.VITE_API_URL as string)
   : (typeof window !== 'undefined' ? '' : 'http://127.0.0.1:8000');
 
+function csrfToken(): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const entry = document.cookie.split('; ').find((item) => item.startsWith('axis_csrf='));
+  return entry ? decodeURIComponent(entry.slice('axis_csrf='.length)) : undefined;
+}
+
 export const dataFeedStatus = writable<DataFeedStatus>({
   source: MOCK_FALLBACK_ENABLED ? 'SIMULATED_MOCK' : 'UNAVAILABLE',
   isLive: false,
@@ -122,6 +128,10 @@ export async function apiFetch<T>(
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       };
+      const csrf = csrfToken();
+      if (csrf && options?.method && options.method !== 'GET' && options.method !== 'HEAD') {
+        headers['x-csrf-token'] = csrf;
+      }
       const apiKey = typeof import.meta !== 'undefined' && import.meta.env?.VITE_AXIS_API_KEY;
       if (apiKey) {
         headers['x-api-key'] = apiKey as string;

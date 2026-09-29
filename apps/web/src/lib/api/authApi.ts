@@ -7,10 +7,18 @@ export interface AuthUser {
 }
 
 async function authRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const csrfCookie = typeof document !== 'undefined'
+    ? document.cookie.split('; ').find((item) => item.startsWith('axis_csrf='))?.slice('axis_csrf='.length)
+    : undefined;
   const response = await fetch(`${BACKEND_URL}${path}`, {
     ...options,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(options.headers || {}) }
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(csrfCookie && options.method && options.method !== 'GET' ? { 'x-csrf-token': decodeURIComponent(csrfCookie) } : {}),
+      ...(options.headers || {})
+    }
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.detail || body.error?.message || 'Authentication request failed');
