@@ -1,5 +1,7 @@
 from collections.abc import AsyncIterator
 
+from app.core.config import normalize_database_url
+
 
 def create_async_engine(database_url: str):
     """Create a SQLAlchemy engine lazily so local in-memory mode needs no DB package."""
@@ -11,7 +13,7 @@ def create_async_engine(database_url: str):
         )
     except ImportError as exc:
         raise RuntimeError("Install the 'database' extra to use PostgreSQL") from exc
-    return sqlalchemy_create_async_engine(database_url, pool_pre_ping=True)
+    return sqlalchemy_create_async_engine(normalize_database_url(database_url), pool_pre_ping=True)
 
 
 async def dispose_engine(engine) -> None:

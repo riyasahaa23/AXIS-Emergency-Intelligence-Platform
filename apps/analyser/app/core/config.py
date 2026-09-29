@@ -3,6 +3,21 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def normalize_database_url(database_url: str) -> str:
+    """Use the asyncpg driver for standard Render/Postgres URLs.
+
+    Render exposes connection strings with the conventional ``postgresql://``
+    scheme. AXIS uses SQLAlchemy's async engine, which needs the explicit
+    ``asyncpg`` dialect. Preserve already-normalized URLs and non-Postgres
+    URLs so local and test configurations remain compatible.
+    """
+    if database_url.startswith("postgres://"):
+        return "postgresql+asyncpg://" + database_url.removeprefix("postgres://")
+    if database_url.startswith("postgresql://"):
+        return "postgresql+asyncpg://" + database_url.removeprefix("postgresql://")
+    return database_url
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AXIS_", env_file=".env", extra="ignore")
 
