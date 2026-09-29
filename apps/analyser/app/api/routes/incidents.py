@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
@@ -162,7 +163,7 @@ async def create_incident_action(incident_id: str, payload: IncidentActionCreate
     await record_audit(request, "INCIDENT_ACTION", "success", "incident", incident_id, {"action_type": action.action_type, "assignee": action.assignee})
     await publish_event(request.app.state.events, DomainEvent(event_type="INCIDENT_ACTION_RECORDED", aggregate_id=incident_id, payload=action.model_dump(mode="json")))
     if action.assignee:
-        severity = "critical" if action.action_type == "escalate" else "info"
+        severity: Literal["info", "warning", "critical"] = "critical" if action.action_type == "escalate" else "info"
         await create_notification(request, Notification(recipient=action.assignee, title=f"Incident {action.action_type}", message=action.message or f"You were assigned to incident {incident_id}", severity=severity, incident_id=incident_id))
     return action
 

@@ -1,11 +1,13 @@
+from typing import Literal
+
 from .models import SourceDefinition
 
 
-def _api(id: str, name: str, publisher: str, endpoint: str, priority: str, description: str, configured: bool = False):
+def _api(id: str, name: str, publisher: str, endpoint: str, priority: Literal["must_have", "should_have"], description: str, configured: bool = False):
     return SourceDefinition(id=id, name=name, publisher=publisher, endpoint=endpoint, kind="api", priority=priority, description=description, requires_configuration=configured)
 
 
-def _dataset(id: str, name: str, publisher: str, endpoint: str, priority: str, description: str, configured: bool = False):
+def _dataset(id: str, name: str, publisher: str, endpoint: str, priority: Literal["must_have", "should_have"], description: str, configured: bool = False):
     return SourceDefinition(id=id, name=name, publisher=publisher, endpoint=endpoint, kind="dataset", priority=priority, description=description, requires_configuration=configured)
 
 

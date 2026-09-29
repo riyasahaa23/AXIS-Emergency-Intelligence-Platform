@@ -61,8 +61,8 @@ class BhuvanAdapter:
                 layer="lulc", title=f"Bhuvan LULC 1:50,000 ({year})",
                 metadata={"wmts_endpoint": self.wmts_url},
             ))
-        for year in range(2004, 2024):
-            label = f"{year}-{str(year + 1)[-2:]}"
+        for numeric_year in range(2004, 2024):
+            label = f"{numeric_year}-{str(numeric_year + 1)[-2:]}"
             products.append(BhuvanLULCProduct(
                 product_id=f"lulc-250k-{label}", scale="1:250000", year=label,
                 service_type="wms", endpoint="https://bhuvan-ras2.nrsc.gov.in/cgi-bin/LULC250K.exe",

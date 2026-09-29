@@ -156,10 +156,12 @@ class LiveIncidentIngestor:
         if source_id == "noaa_alerts":
             return [cls._from_noaa(item) for item in payload.get("features", []) if isinstance(item, dict)]
         if source_id == "emsc":
-            events = payload.get("features", payload.get("earthquakes", []))
+            raw_events = payload.get("features", payload.get("earthquakes", []))
+            events = raw_events if isinstance(raw_events, list) else []
             return [cls._from_emsc(item) for item in events if isinstance(item, dict)]
         if source_id == "copernicus_ems":
-            events = payload.get("results", payload.get("activations", payload.get("data", []))) if isinstance(payload, dict) else []
+            raw_events = payload.get("results", payload.get("activations", payload.get("data", []))) if isinstance(payload, dict) else []
+            events = raw_events if isinstance(raw_events, list) else []
             return [cls._from_copernicus(item) for item in events if isinstance(item, dict)]
         return []
 
@@ -192,7 +194,8 @@ class LiveIncidentIngestor:
 
     @staticmethod
     def _from_emsc(event: dict[str, Any]) -> LiveIncidentCandidate:
-        props = event.get("properties") if isinstance(event.get("properties"), dict) else event
+        raw_props = event.get("properties")
+        props: dict[str, Any] = raw_props if isinstance(raw_props, dict) else event
         external_id = str(props.get("eventid") or props.get("id") or event.get("id") or props.get("publicID") or "unknown")
         magnitude = float(props.get("mag") or props.get("magnitude") or 0)
         coordinates = ((event.get("geometry") or {}).get("coordinates") or []) if isinstance(event.get("geometry"), dict) else []

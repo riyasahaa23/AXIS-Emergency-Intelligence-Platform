@@ -1,5 +1,6 @@
+from typing import Any
+
 from app.core.events import DomainEvent, EventPublisher, publish_event
-from app.incident.state import InMemoryIncidentStore
 from app.models.incident import Incident, IncidentCreate, IncidentUpdate
 
 
@@ -10,7 +11,7 @@ async def _await_if_needed(value):
 
 
 class IncidentManager:
-    def __init__(self, store: InMemoryIncidentStore, events: EventPublisher) -> None:
+    def __init__(self, store: Any, events: EventPublisher) -> None:
         self.store = store
         self.events = events
 

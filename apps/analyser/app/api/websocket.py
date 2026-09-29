@@ -1,6 +1,7 @@
 import asyncio
 import json
 import secrets
+from typing import Any
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -61,7 +62,7 @@ async def _redis_events(websocket: WebSocket, redis_url: str) -> None:
         last_id = "$"
         try:
             while True:
-                records = await client.xread({"axis.events": last_id}, block=30_000, count=20)
+                records: Any = await client.xread({"axis.events": last_id}, block=30_000, count=20)
                 for _, messages in records:
                     for stream_id, fields in messages:
                         last_id = stream_id

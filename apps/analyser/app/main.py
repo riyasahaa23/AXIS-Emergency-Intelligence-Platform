@@ -24,7 +24,7 @@ from app.api.routes import (
 from app.auth.gateway import install_gateway
 from app.auth.service import AuthService
 from app.core.config import get_cors_origins, get_settings, validate_runtime_settings
-from app.core.events import InMemoryEventPublisher
+from app.core.events import EventPublisher, InMemoryEventPublisher
 from app.core.logging import configure_logging
 from app.core.metrics import Metrics, instrument_request
 from app.core.rate_limit import SlidingWindowRateLimiter
@@ -81,7 +81,7 @@ async def lifespan(application: FastAPI):
             database_engine = None
     application.state.database_engine = database_engine
     application.state.auth_service = AuthService(database_engine)
-    events = InMemoryEventPublisher()
+    events: EventPublisher = InMemoryEventPublisher()
     if settings.redis_url:
         try:
             from app.core.events import RedisStreamPublisher

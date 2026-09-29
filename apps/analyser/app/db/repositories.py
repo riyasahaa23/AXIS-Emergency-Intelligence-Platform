@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Protocol
+from typing import Any, Protocol
 
+from app.core.events import DomainEvent
 from app.models.incident import Incident, IncidentCreate, IncidentStatus, IncidentUpdate
 
 
@@ -203,10 +204,8 @@ class PostgresIncidentRepository:
                 {**event.model_dump(mode="python"), "payload": json.dumps(event.payload)},
             )
 
-    async def timeline(self, incident_id: str) -> list:
+    async def timeline(self, incident_id: str) -> list[DomainEvent]:  # type: ignore[valid-type]
         from sqlalchemy import text
-
-        from app.core.events import DomainEvent
 
         await self.get(incident_id)
         async with self.engine.connect() as connection:
@@ -221,6 +220,6 @@ class PostgresIncidentRepository:
                 events.append(DomainEvent.model_validate(values))
             return events
 
-    async def evidence(self, incident_id: str) -> list[dict]:
-        events = await self.timeline(incident_id)
+    async def evidence(self, incident_id: str) -> list[dict]:  # type: ignore[valid-type]
+        events: Any = await self.timeline(incident_id)
         return [item for event in events for item in event.payload.get("evidence", []) if isinstance(item, dict)]

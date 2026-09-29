@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import builtins
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -13,7 +15,7 @@ from .registry import SOURCE_REGISTRY
 class IngestionScheduleCreate(BaseModel):
     source_id: str
     interval_seconds: int = Field(ge=60, le=31_536_000)
-    params: dict = Field(default_factory=dict)
+    params: dict[str, Any] = Field(default_factory=dict)
     limit: int = Field(default=25, ge=1, le=100)
     enabled: bool = True
 
@@ -22,7 +24,7 @@ class IngestionSchedule(BaseModel):
     id: str = Field(default_factory=lambda: f"sch_{uuid4().hex}")
     source_id: str
     interval_seconds: int
-    params: dict = Field(default_factory=dict)
+    params: dict[str, Any] = Field(default_factory=dict)
     limit: int = 25
     enabled: bool = True
     next_run_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -56,7 +58,7 @@ class IngestionScheduler:
         await self._persist(schedule)
         return schedule
 
-    async def list(self) -> list[IngestionSchedule]:
+    async def list(self) -> builtins.list[IngestionSchedule]:
         if self.database_engine is None:
             return list(self.schedules.values())
         from sqlalchemy import text
@@ -65,7 +67,7 @@ class IngestionScheduler:
             rows = (await connection.execute(text("SELECT * FROM ingestion_schedules ORDER BY created_at"))).mappings().all()
         return [self._from_row(row) for row in rows]
 
-    async def run_once(self, now: datetime | None = None) -> list[str]:
+    async def run_once(self, now: datetime | None = None) -> builtins.list[str]:
         current = now or datetime.now(UTC)
         schedules = await self.list()
         queued: list[str] = []

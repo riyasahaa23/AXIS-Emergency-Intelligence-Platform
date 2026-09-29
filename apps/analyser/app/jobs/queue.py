@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,7 @@ class RedisJobQueue:
         self.stream = stream
         self.group = group
         self.consumer = consumer
-        self.client = None
+        self.client: Any = None
 
     async def connect(self) -> None:
         try:

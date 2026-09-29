@@ -8,8 +8,8 @@ class Metrics:
     """Small Prometheus text-format collector with no runtime dependency."""
 
     def __init__(self) -> None:
-        self.requests = Counter()
-        self.request_seconds = defaultdict(float)
+        self.requests: Counter[tuple[str, str, str]] = Counter()
+        self.request_seconds: defaultdict[tuple[str, str], float] = defaultdict(float)
 
     def observe_request(self, method: str, path: str, status: int, elapsed: float) -> None:
         self.requests[(method, path, str(status))] += 1

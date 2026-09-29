@@ -34,7 +34,7 @@ class AnalysisJobManager:
 
         self.repository = AnalysisJobRepository(database_engine) if database_engine is not None else None
         self.redis_url = redis_url
-        self.redis_queue = None
+        self.redis_queue: Any = None
         self.jobs: dict[str, AnalysisJob] = {}
         self.queue: asyncio.Queue[str] = asyncio.Queue()
         self.worker_task: asyncio.Task[None] | None = None

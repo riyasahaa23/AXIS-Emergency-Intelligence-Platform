@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 
+from app.core.events import DomainEvent
 from app.models.incident import Incident, IncidentCreate, IncidentUpdate
 
 
@@ -20,7 +22,7 @@ class IncidentVersionConflictError(ValueError):
 class InMemoryIncidentStore:
     def __init__(self) -> None:
         self._incidents: dict[str, Incident] = {}
-        self._events: dict[str, list] = {}
+        self._events: dict[str, list[DomainEvent]] = {}
 
     def create(self, data: IncidentCreate) -> Incident:
         if data.latitude is None or data.longitude is None:
@@ -56,23 +58,23 @@ class InMemoryIncidentStore:
         self._incidents[incident_id] = updated
         return updated
 
-    def record_event(self, event) -> None:
+    def record_event(self, event: DomainEvent) -> None:
         self._events.setdefault(event.aggregate_id, []).append(event)
 
-    def timeline(self, incident_id: str) -> list:
+    def timeline(self, incident_id: str) -> list[DomainEvent]:  # type: ignore[valid-type]
         self.get(incident_id)
         return list(self._events.get(incident_id, []))
 
-    def evidence(self, incident_id: str) -> list[dict]:
-        evidence: list[dict] = []
-        for event in self.timeline(incident_id):
+    def evidence(self, incident_id: str) -> list[dict]:  # type: ignore[valid-type]
+        evidence: list[dict[str, Any]] = []
+        for event in self.timeline(incident_id):  # type: ignore[attr-defined]
             items = event.payload.get("evidence", [])
             if isinstance(items, list):
                 evidence.extend(item for item in items if isinstance(item, dict))
         return evidence
 
     def replay(self, incident_id: str) -> Incident:
-        events = self.timeline(incident_id)
+        events: Any = self.timeline(incident_id)
         if not events:
             raise IncidentNotFoundError(incident_id)
         state: Incident | None = None

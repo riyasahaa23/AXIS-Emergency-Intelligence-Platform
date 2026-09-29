@@ -30,7 +30,7 @@ class S3ObjectStore:
 
     async def put(self, key: str, content: bytes, content_type: str = "application/octet-stream") -> str:
         try:
-            import boto3
+            import boto3  # type: ignore[import-untyped]
         except ImportError as exc:
             raise RuntimeError("Install the storage extra to use S3-compatible object storage") from exc
 

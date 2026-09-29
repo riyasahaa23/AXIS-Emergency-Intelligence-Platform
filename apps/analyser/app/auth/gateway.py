@@ -4,6 +4,7 @@ import hashlib
 import secrets
 import time
 from dataclasses import dataclass
+from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -55,7 +56,7 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.settings = settings
         self.limiter = SlidingWindowRateLimiter(settings.rate_limit_per_minute)
-        self.redis = None
+        self.redis: Any = None
 
     async def dispatch(self, request: Request, call_next):
         settings = getattr(request.app.state, "settings", self.settings)
