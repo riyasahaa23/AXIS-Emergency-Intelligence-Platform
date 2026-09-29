@@ -79,7 +79,14 @@ class LiveIncidentIngestor:
                 for candidate in candidates:
                     if await self._already_seen(candidate.source_id, candidate.external_id):
                         continue
-                    incident = await self.manager.create(candidate.incident)
+                    now = datetime.now(UTC)
+                    incident = await self.manager.create(candidate.incident.model_copy(update={
+                        "source_id": candidate.source_id,
+                        "external_id": candidate.external_id,
+                        "data_status": "live",
+                        "observed_at": now,
+                        "last_seen_at": now,
+                    }))
                     await self._remember(candidate.source_id, candidate.external_id, incident.id)
                     created += 1
                     provider_created += 1

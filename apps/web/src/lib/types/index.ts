@@ -25,6 +25,14 @@ export interface HazardIncident {
   timestamp: string;
   riskScore: number; // 0-100
   confidence: number; // 0.0 - 1.0
+  provenance?: {
+    sourceId?: string;
+    externalId?: string;
+    confidence?: number;
+    dataStatus: 'live' | 'estimated' | 'simulated' | 'fallback';
+    observedAt?: string;
+    lastSeenAt?: string;
+  };
   thumbnailUrl?: string;
   status: 'active' | 'escalating' | 'contained' | 'monitoring';
   details: {

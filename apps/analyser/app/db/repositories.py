@@ -113,6 +113,9 @@ class PostgresIncidentRepository:
             location=values["location"], severity=values["severity"], exposure=values["exposure"],
             population=values["population"], vulnerability=values["vulnerability"],
             latitude=latitude, longitude=longitude,
+            source_id=values.get("source_id"), external_id=values.get("external_id"),
+            confidence=values.get("confidence"), data_status=values.get("data_status", "live"),
+            observed_at=values.get("observed_at"), last_seen_at=values.get("last_seen_at"),
             status=IncidentStatus(values["status"]), created_at=values["created_at"], updated_at=values["updated_at"],
             version=values.get("version", 1),
         )
@@ -125,9 +128,11 @@ class PostgresIncidentRepository:
             result = await connection.execute(
                 text("""INSERT INTO incidents
                     (id, title, hazard_type, location, severity, exposure, population, vulnerability,
-                     latitude, longitude, status, created_at, updated_at)
+                     latitude, longitude, source_id, external_id, confidence, data_status,
+                     observed_at, last_seen_at, status, created_at, updated_at)
                     VALUES (:id, :title, :hazard_type, :location, :severity, :exposure, :population, :vulnerability,
-                            :latitude, :longitude, :status, :created_at, :updated_at)
+                            :latitude, :longitude, :source_id, :external_id, :confidence, :data_status,
+                            :observed_at, :last_seen_at, :status, :created_at, :updated_at)
                     RETURNING *"""),
                 incident.model_dump(mode="python"),
             )

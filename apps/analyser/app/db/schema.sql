@@ -56,6 +56,12 @@ CREATE TABLE IF NOT EXISTS incidents (
     vulnerability DOUBLE PRECISION NOT NULL CHECK (vulnerability BETWEEN 0 AND 100),
     latitude DOUBLE PRECISION CHECK (latitude BETWEEN -90 AND 90),
     longitude DOUBLE PRECISION CHECK (longitude BETWEEN -180 AND 180),
+    source_id TEXT,
+    external_id TEXT,
+    confidence DOUBLE PRECISION CHECK (confidence BETWEEN 0 AND 100),
+    data_status TEXT NOT NULL DEFAULT 'live' CHECK (data_status IN ('live', 'estimated', 'simulated', 'fallback')),
+    observed_at TIMESTAMPTZ,
+    last_seen_at TIMESTAMPTZ,
     status TEXT NOT NULL DEFAULT 'active',
     version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
     geom GEOGRAPHY(POINT, 4326),
@@ -64,6 +70,7 @@ CREATE TABLE IF NOT EXISTS incidents (
 );
 
 CREATE INDEX IF NOT EXISTS incidents_geom_idx ON incidents USING GIST (geom);
+CREATE INDEX IF NOT EXISTS incidents_source_idx ON incidents(source_id, last_seen_at DESC);
 
 CREATE TABLE IF NOT EXISTS live_incident_keys (
     source_id TEXT NOT NULL,

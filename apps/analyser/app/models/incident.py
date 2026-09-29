@@ -21,6 +21,12 @@ class IncidentCreate(BaseModel):
     vulnerability: float = Field(default=50, ge=0, le=100)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
+    source_id: str | None = Field(default=None, max_length=120)
+    external_id: str | None = Field(default=None, max_length=240)
+    confidence: float | None = Field(default=None, ge=0, le=100)
+    data_status: str = Field(default="live", pattern="^(live|estimated|simulated|fallback)$")
+    observed_at: datetime | None = None
+    last_seen_at: datetime | None = None
 
 
 class IncidentUpdate(BaseModel):

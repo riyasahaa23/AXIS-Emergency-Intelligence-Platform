@@ -74,3 +74,7 @@ async def test_live_feeds_are_normalized_and_deduplicated():
         await ingestor.http_client.aclose()
 
     assert {item.hazard_type for item in manager.created} == {"earthquake", "fl"}
+    assert {item.source_id for item in manager.created} == {"usgs_earthquakes", "gdacs"}
+    assert {item.data_status for item in manager.created} == {"live"}
+    assert all(item.external_id for item in manager.created)
+    assert all(item.observed_at is not None and item.last_seen_at is not None for item in manager.created)

@@ -92,6 +92,14 @@ export function normalizeIncident(raw: any): HazardIncident {
     timestamp,
     riskScore: Math.round(numericSev),
     confidence: raw.confidence ?? 0,
+    provenance: {
+      sourceId: raw.source_id,
+      externalId: raw.external_id,
+      confidence: raw.confidence,
+      dataStatus: raw.data_status || 'estimated',
+      observedAt: raw.observed_at,
+      lastSeenAt: raw.last_seen_at
+    },
     thumbnailUrl: raw.thumbnailUrl,
     status: raw.status === 'active' ? 'escalating' : (raw.status || 'monitoring'),
     details: { ...(raw.details || {}), description: incidentDescription },
