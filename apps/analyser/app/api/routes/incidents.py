@@ -4,7 +4,11 @@ from app.auth.dependencies import require_scope
 from app.core.events import DomainEvent
 from app.incident.state import IncidentNotFoundError, IncidentVersionConflictError
 from app.models.incident import Incident, IncidentCreate, IncidentUpdate
+from app.models.incident_actions import IncidentAction, IncidentActionCreate, Notification
 from app.safety.approvals import ApprovalRecord
+from app.notifications.service import create_notification
+from app.core.events import DomainEvent, publish_event
+from app.audit.service import record_audit
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
@@ -45,6 +49,54 @@ async def update_incident(incident_id: str, payload: IncidentUpdate, request: Re
         raise HTTPException(status_code=409, detail={"code": "INCIDENT_VERSION_CONFLICT", "expected": exc.expected, "actual": exc.actual}) from exc
     except IncidentNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Incident not found") from exc
+
+
+@router.get("/{incident_id}/actions", response_model=list[IncidentAction], dependencies=[Depends(require_scope("read"))])
+async def list_incident_actions(incident_id: str, request: Request) -> list[IncidentAction]:
+    try:
+        result = manager(request).store.get(incident_id)
+        await result if hasattr(result, "__await__") else result
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Incident not found") from exc
+    engine = getattr(request.app.state, "database_engine", None)
+    if engine is None:
+        return [item for item in request.app.state.incident_actions if item.incident_id == incident_id]
+    from sqlalchemy import text
+
+    async with engine.connect() as connection:
+        rows = (await connection.execute(text("SELECT * FROM incident_actions WHERE incident_id=:incident_id ORDER BY created_at"), {"incident_id": incident_id})).mappings().all()
+    return [IncidentAction.model_validate(dict(row)) for row in rows]
+
+
+@router.post("/{incident_id}/actions", response_model=IncidentAction, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("analyse"))])
+async def create_incident_action(incident_id: str, payload: IncidentActionCreate, request: Request) -> IncidentAction:
+    try:
+        result = manager(request).store.get(incident_id)
+        await result if hasattr(result, "__await__") else result
+    except IncidentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Incident not found") from exc
+    context = getattr(request.state, "auth", None)
+    action = IncidentAction(
+        incident_id=incident_id,
+        actor=context.subject if context else "anonymous",
+        **payload.model_dump(),
+    )
+    request.app.state.incident_actions.append(action)
+    engine = getattr(request.app.state, "database_engine", None)
+    if engine is not None:
+        from sqlalchemy import text
+        import json
+
+        async with engine.begin() as connection:
+            await connection.execute(text("""INSERT INTO incident_actions
+                (id, incident_id, actor, action_type, message, assignee, metadata, created_at)
+                VALUES (:id, :incident_id, :actor, :action_type, :message, :assignee, CAST(:metadata AS JSONB), :created_at)"""), {**action.model_dump(mode="python"), "metadata": json.dumps(action.metadata)})
+    await record_audit(request, "INCIDENT_ACTION", "success", "incident", incident_id, {"action_type": action.action_type, "assignee": action.assignee})
+    await publish_event(request.app.state.events, DomainEvent(event_type="INCIDENT_ACTION_RECORDED", aggregate_id=incident_id, payload=action.model_dump(mode="json")))
+    if action.assignee:
+        severity = "critical" if action.action_type == "escalate" else "info"
+        await create_notification(request, Notification(recipient=action.assignee, title=f"Incident {action.action_type}", message=action.message or f"You were assigned to incident {incident_id}", severity=severity, incident_id=incident_id))
+    return action
 
 
 @router.get("/{incident_id}/timeline", response_model=list[DomainEvent], dependencies=[Depends(require_scope("read"))])

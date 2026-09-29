@@ -502,6 +502,32 @@ CREATE TABLE IF NOT EXISTS audit_events (
 CREATE INDEX IF NOT EXISTS audit_events_created_idx
     ON audit_events(created_at DESC);
 
+CREATE TABLE IF NOT EXISTS incident_actions (
+    id TEXT PRIMARY KEY,
+    incident_id TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+    actor TEXT NOT NULL,
+    action_type TEXT NOT NULL CHECK (action_type IN ('note', 'assign', 'escalate', 'acknowledge', 'status_change')),
+    message TEXT NOT NULL DEFAULT '',
+    assignee TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS incident_actions_incident_idx ON incident_actions(incident_id, created_at);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    recipient TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'critical')),
+    incident_id TEXT REFERENCES incidents(id) ON DELETE CASCADE,
+    read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_recipient_idx ON notifications(recipient, read, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,

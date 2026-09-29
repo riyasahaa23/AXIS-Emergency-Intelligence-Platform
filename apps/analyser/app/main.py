@@ -18,6 +18,7 @@ from app.api.routes import (
     satellite,
     scenarios,
     telemetry,
+    notifications,
 )
 from app.auth.gateway import install_gateway
 from app.auth.service import AuthService
@@ -93,6 +94,8 @@ async def lifespan(application: FastAPI):
     application.state.events = events
     application.state.audit_events = []
     application.state.approvals = []
+    application.state.incident_actions = []
+    application.state.notifications = []
     incident_store = PostgresIncidentRepository(database_engine) if database_engine is not None else InMemoryIncidentStore()
     application.state.incident_manager = IncidentManager(incident_store, events)
     application.state.risk_engine = RiskEngine()
@@ -204,4 +207,5 @@ app.include_router(websocket.router)
 app.include_router(satellite.router)
 app.include_router(data.router)
 app.include_router(telemetry.router)
+app.include_router(notifications.router)
 app.include_router(jobs.router)
