@@ -309,7 +309,10 @@ export async function fetchIncidents(): Promise<HazardIncident[]> {
   if (allRecords.length > 0) {
     return allRecords.map(normalizeIncident);
   }
-  return MOCK_FALLBACK_ENABLED ? MOCK_INCIDENTS.map(normalizeIncident) : [];
+  // An empty but healthy live response is valid and must not be relabelled as
+  // synthetic data. apiFetch already supplies MOCK_INCIDENTS when the live
+  // request itself is unavailable.
+  return [];
 }
 
 export async function fetchIncidentById(id: string): Promise<HazardIncident | null> {

@@ -44,4 +44,16 @@ describe('client - apiFetch and probeBackend fallback architecture', () => {
     expect(get(dataFeedStatus).source).toBe('REAL_API');
     expect(get(dataFeedStatus).isLive).toBe(true);
   });
+
+  it('uses fallback automatically when a live API responds with an error', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ status: 'ok' }) } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({}) } as Response);
+
+    const result = await apiFetch('/api/v1/incidents', [{ id: 'automatic-demo' }]);
+
+    expect(result).toEqual([{ id: 'automatic-demo' }]);
+    expect(get(dataFeedStatus).source).toBe('SIMULATED_MOCK');
+    expect(get(dataFeedStatus).isLive).toBe(false);
+  });
 });

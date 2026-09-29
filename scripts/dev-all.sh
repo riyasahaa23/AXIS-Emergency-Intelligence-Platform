@@ -129,6 +129,7 @@ else
   # Local development remains usable when public feeds or the API are down.
   # The UI labels this path DEMO DATA; production never enables it.
   VITE_ENABLE_MOCK_FALLBACK="${VITE_ENABLE_MOCK_FALLBACK:-true}" \
+    VITE_STRICT_LIVE_DATA="${VITE_STRICT_LIVE_DATA:-false}" \
     VITE_AXIS_API_KEY="${VITE_AXIS_API_KEY:-${AXIS_API_KEY_READONLY:-}}" \
     npm run dev --workspace=@axis/web &
   web_pid=$!
