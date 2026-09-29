@@ -1,6 +1,6 @@
 # AXIS Production Feature Roadmap
 
-Status: in progress
+Status: core implementation complete; optional extensions remain
 
 The platform is being extended in small, validated phases. Existing API
 contracts, demo fallback behavior, and deployment-safe migration rules remain
@@ -23,14 +23,18 @@ unchanged unless a feature explicitly requires a versioned addition.
 - GeoJSON and CSV incident exports retaining provenance fields.
 - Audit listing and CSV export APIs.
 
-## Next implementation phases
+## Optional follow-up extensions
 
-1. Authentication email verification/password reset delivery boundaries.
-2. Provider health history, freshness thresholds, and external notification
-   delivery adapters.
-3. Response resources, shelters, teams, and approval/export workflows.
-4. Browser-level testing, observability dashboards, load testing, and
-   production runbooks.
+These are deliberately deferred extensions rather than missing pieces of the
+core platform objective:
+
+1. Email verification/password reset delivery, once a mail provider is
+   configured.
+2. Long-term provider health history and external observability dashboards.
+3. Dedicated resource/shelter/team inventory persistence beyond the persisted
+   response-plan allocations.
+4. Browser-level and load-test suites beyond the current API, unit, type,
+   build, lint, and CI checks.
 
 Each phase must pass backend tests, frontend type checks/tests, production
 builds, and migration validation before it is committed and pushed.
