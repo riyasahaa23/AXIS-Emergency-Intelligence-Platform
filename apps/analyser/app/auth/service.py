@@ -75,6 +75,28 @@ class AuthService:
         user = await self._find_user(normalized)
         if not user or not self.verify_password(password, user["password_hash"]):
             raise ValueError("Invalid email or password")
+        if self.database_engine is not None:
+            from sqlalchemy import text
+
+            async with self.database_engine.begin() as connection:
+                await connection.execute(text("UPDATE users SET last_login_at=now(), updated_at=now() WHERE id=:id"), {"id": user["id"]})
+        return await self._issue_session(user)
+
+    async def refresh(self, token: str | None) -> tuple[dict[str, str], str]:
+        """Rotate a valid session token and revoke the previous token."""
+        context = await self.authenticate(token)
+        if context is None:
+            raise ValueError("Authentication is required")
+        user = await self.user_for_context(context)
+        if user is None:
+            raise ValueError("Authentication is required")
+        await self.logout(token)
+        stored_user = await self._find_user(user["email"])
+        if stored_user is None:
+            raise ValueError("Authentication is required")
+        return await self._issue_session(stored_user)
+
+    async def _issue_session(self, user: dict[str, Any]) -> tuple[dict[str, str], str]:
         token = secrets.token_urlsafe(48)
         session_id = f"SES-{uuid4().hex[:12].upper()}"
         expires_at = datetime.now(UTC) + timedelta(days=self.session_days)

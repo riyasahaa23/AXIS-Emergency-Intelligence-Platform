@@ -42,6 +42,15 @@ export async function currentUser(): Promise<AuthUser | null> {
   }
 }
 
+export async function refreshSession(): Promise<AuthUser | null> {
+  try {
+    const result = await authRequest<{ user: AuthUser }>('/api/auth/refresh', { method: 'POST' });
+    return result.user;
+  } catch {
+    return null;
+  }
+}
+
 export async function logout(): Promise<void> {
   await authRequest('/api/auth/logout', { method: 'POST' });
 }

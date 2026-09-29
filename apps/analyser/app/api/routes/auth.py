@@ -49,6 +49,16 @@ async def login(payload: Credentials, request: Request, response: Response):
     return {"user": user}
 
 
+@router.post("/refresh")
+async def refresh(request: Request, response: Response):
+    try:
+        user, token = await auth_service(request).refresh(request.cookies.get(SESSION_COOKIE))
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    set_session_cookie(response, request, token)
+    return {"user": user}
+
+
 @router.post("/logout")
 async def logout(request: Request, response: Response):
     await auth_service(request).logout(request.cookies.get(SESSION_COOKIE))
