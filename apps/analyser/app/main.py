@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import websocket
 from app.api.routes import (
     analysis,
+    auth,
     data,
     health,
     incidents,
@@ -19,6 +20,7 @@ from app.api.routes import (
     telemetry,
 )
 from app.auth.gateway import install_gateway
+from app.auth.service import AuthService
 from app.core.config import get_cors_origins, get_settings, validate_runtime_settings
 from app.core.events import InMemoryEventPublisher
 from app.core.logging import configure_logging
@@ -76,6 +78,7 @@ async def lifespan(application: FastAPI):
             await dispose_engine(database_engine)
             database_engine = None
     application.state.database_engine = database_engine
+    application.state.auth_service = AuthService(database_engine)
     events = InMemoryEventPublisher()
     if settings.redis_url:
         try:
@@ -174,7 +177,7 @@ settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_cors_origins(settings),
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["Accept", "Content-Type", "Authorization", "X-API-Key", "X-Request-ID"],
 )
@@ -192,6 +195,7 @@ async def request_metrics(request, call_next):
 install_gateway(app, settings)
 
 app.include_router(health.router)
+app.include_router(auth.router)
 app.include_router(incidents.router)
 app.include_router(analysis.router)
 app.include_router(scenarios.router)

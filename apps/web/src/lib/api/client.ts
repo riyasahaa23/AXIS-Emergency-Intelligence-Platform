@@ -129,6 +129,7 @@ export async function apiFetch<T>(
 
       const res = await fetch(url, {
         ...options,
+        credentials: 'include',
         signal: controller.signal,
         headers: {
           ...headers,

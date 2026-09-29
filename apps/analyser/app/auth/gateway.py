@@ -30,6 +30,10 @@ def _credential(request: Request) -> str | None:
     return None
 
 
+def _session_token(request: Request) -> str | None:
+    return request.cookies.get("axis_session")
+
+
 def _match(value: str, configured: str | None) -> bool:
     return bool(value and configured and secrets.compare_digest(value, configured))
 
@@ -79,6 +83,9 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         public = request.url.path in {"/health", "/health/live", "/health/ready", "/metrics", "/docs", "/openapi.json"} or request.url.path.startswith("/redoc")
         credential = _credential(request)
         context: AuthContext | None = None
+        session_context = None
+        if not credential and getattr(request.app.state, "auth_service", None) is not None:
+            session_context = await request.app.state.auth_service.authenticate(_session_token(request))
         if _match(credential or "", settings.api_key_admin):
             context = AuthContext("admin", frozenset({"*", "admin"}), "api_key")
         elif _match(credential or "", settings.api_key_readonly):
@@ -91,12 +98,18 @@ class GatewayMiddleware(BaseHTTPMiddleware):
             response = self._denied(request_id, "AUTH_DENIED", "Invalid API credential")
             await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "invalid_credential"})
             return response
-        elif settings.environment == "production" and not public:
+        elif session_context is not None:
+            context = session_context
+        elif settings.environment == "production" and not public and not request.url.path.startswith("/api/auth"):
             from app.audit.service import record_audit
             request.state.auth = None
             response = self._denied(request_id, "AUTH_DENIED", "Authentication is required")
             await record_audit(request, "AUTHENTICATION", "denied", metadata={"reason": "missing_credential"})
             return response
+        elif request.url.path.startswith("/api/auth"):
+            # Registration, login, and logout establish or clear identity.
+            # Protected account data (/me) performs its own session check.
+            context = None
         elif not public and settings.environment == "development" and settings.allow_anonymous_demo:
             context = AuthContext("anonymous-development", frozenset({"read", "analyse", "simulate", "ingest", "schedule", "recommend"}), "anonymous")
         elif not public:

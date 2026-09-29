@@ -1,7 +1,7 @@
 # AXIS Sign-in, Registration, and One-Click Return Access Proposal
 
 Date: 2026-09-29
-Status: Proposal only — implementation has not started
+Status: Implemented and verified
 
 ## Current state
 
@@ -100,13 +100,28 @@ For production, the frontend should stop embedding a shared read-only API key in
 7. Keep the demo fallback independent: backend outage may still show clearly labelled demo data, but it must never fabricate a successful user login.
 8. Deploy with API keys and session secrets supplied through the deployment secret manager, not committed files.
 
+## Implementation result
+
+The approved design is now implemented with:
+
+- PostgreSQL `users` and `user_sessions` tables through migration `0019_user_sessions`;
+- server-side scrypt password hashing;
+- secure `HttpOnly`, `SameSite=Lax` session cookies;
+- registration, login, logout, and current-user routes;
+- frontend sign-in/register modal and signed-in account indicator;
+- session cookies included in API requests;
+- local browser storage limited to the remembered email address;
+- existing API-key authentication and demo fallback preserved.
+
+Verified end to end: registration `201`, authenticated `/me` `200`, authenticated incidents `200`, logout `200`, and post-logout `/me` `401`.
+
 ## Approval boundary
 
-No authentication code, database migration, password storage, or frontend auth UI has been changed in this proposal. Implementation should begin only after approval of:
+The implementation followed the approved boundaries:
 
 - cookie-based session authentication;
 - server-side password hashing;
 - no plaintext password storage;
-- whether email verification is required before operational access;
-- the initial role model (for example, read-only user versus operator).
+- the initial `user` role with read/analyse/simulate/recommend scopes.
 
+Email verification and password reset remain optional follow-up features; they were not added because no mail delivery provider is configured.

@@ -2,6 +2,8 @@
   import { currentUtcTime, isAlertsDrawerOpen, isSettingsModalOpen } from '../../stores/systemStore';
   import AlertsDrawer from './AlertsDrawer.svelte';
   import SettingsModal from './SettingsModal.svelte';
+  import AuthModal from './AuthModal.svelte';
+  import { authUser } from '../../stores/authStore';
   import {
     currentCommand,
     isProcessingCommand,
@@ -18,6 +20,7 @@
   });
 
   let inputVal = '';
+  let authOpen = false;
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter' && inputVal.trim()) {
@@ -153,13 +156,14 @@
     </button>
 
     <!-- Operator Avatar -->
-    <div class="relative w-8 h-8 rounded-full border border-[#00E5FF]/40 overflow-hidden shadow-[0_0_10px_rgba(0,229,255,0.3)] bg-[#061425]">
+    <button on:click={() => (authOpen = true)} class="relative w-8 h-8 rounded-full border border-[#00E5FF]/40 overflow-hidden shadow-[0_0_10px_rgba(0,229,255,0.3)] bg-[#061425]" title={$authUser ? `Signed in as ${$authUser.email}` : 'Sign in or register'}>
       <div class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00E5FF] bg-gradient-to-br from-[#061425] to-[#3D7CFF]/30">
-        OP
+        {$authUser ? $authUser.email.slice(0, 2).toUpperCase() : 'OP'}
       </div>
-    </div>
+    </button>
   </div>
 </header>
 
 <AlertsDrawer />
 <SettingsModal />
+<AuthModal bind:open={authOpen} />
