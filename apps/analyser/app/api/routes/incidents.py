@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+import csv
+import io
+import json
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
 from app.auth.dependencies import require_scope
 from app.core.events import DomainEvent
@@ -30,6 +34,66 @@ async def list_incidents(
 ) -> list[Incident]:
     result = manager(request).store.list(limit=limit, offset=offset)
     return await result if hasattr(result, "__await__") else result
+
+
+async def _incident_list(request: Request, limit: int = 200):
+    result = manager(request).store.list(limit=limit, offset=0)
+    return await result if hasattr(result, "__await__") else result
+
+
+@router.get("/geojson", dependencies=[Depends(require_scope("read"))])
+async def incident_geojson(
+    request: Request,
+    min_lat: float | None = Query(default=None, ge=-90, le=90),
+    min_lng: float | None = Query(default=None, ge=-180, le=180),
+    max_lat: float | None = Query(default=None, ge=-90, le=90),
+    max_lng: float | None = Query(default=None, ge=-180, le=180),
+    limit: int = Query(default=200, ge=1, le=1000),
+):
+    incidents = await _incident_list(request, limit)
+    if None not in {min_lat, min_lng, max_lat, max_lng}:
+        incidents = [item for item in incidents if min_lat <= item.latitude <= max_lat and min_lng <= item.longitude <= max_lng]
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "id": incident.id,
+                "geometry": {"type": "Point", "coordinates": [incident.longitude, incident.latitude]},
+                "properties": {
+                    "id": incident.id,
+                    "title": incident.title,
+                    "hazard_type": incident.hazard_type,
+                    "severity": incident.severity,
+                    "status": incident.status,
+                    "data_status": incident.data_status,
+                    "source_id": incident.source_id,
+                    "external_id": incident.external_id,
+                    "confidence": incident.confidence,
+                    "observed_at": incident.observed_at.isoformat() if incident.observed_at else None,
+                    "last_seen_at": incident.last_seen_at.isoformat() if incident.last_seen_at else None,
+                },
+            }
+            for incident in incidents
+            if incident.latitude is not None and incident.longitude is not None
+        ],
+    }
+
+
+@router.get("/export", dependencies=[Depends(require_scope("read"))])
+async def export_incidents(request: Request, format: str = Query(default="geojson", pattern="^(geojson|csv)$")):
+    incidents = await _incident_list(request, 1000)
+    if format == "geojson":
+        payload = await incident_geojson(request, limit=1000)
+        return Response(content=json.dumps(payload, default=str), media_type="application/geo+json", headers={"content-disposition": "attachment; filename=axis-incidents.geojson"})
+    output = io.StringIO()
+    fields = ["id", "title", "hazard_type", "location", "severity", "status", "latitude", "longitude", "source_id", "external_id", "data_status", "confidence", "observed_at", "last_seen_at"]
+    writer = csv.DictWriter(output, fieldnames=fields)
+    writer.writeheader()
+    for incident in incidents:
+        row = incident.model_dump(mode="json")
+        writer.writerow({field: row.get(field, "") for field in fields})
+    return Response(content=output.getvalue(), media_type="text/csv", headers={"content-disposition": "attachment; filename=axis-incidents.csv"})
 
 
 @router.get("/{incident_id}", response_model=Incident, dependencies=[Depends(require_scope("read"))])

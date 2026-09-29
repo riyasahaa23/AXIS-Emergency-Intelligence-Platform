@@ -46,3 +46,21 @@ def test_response_plans_are_persisted_in_local_runtime(client):
     listed = client.get(f"/api/incidents/{incident_id}/response-plans")
     assert listed.status_code == 200
     assert listed.json()[0]["plan_id"] == plan["plan_id"]
+
+
+def test_incident_geojson_and_csv_exports_include_provenance(client):
+    incident_response = client.post(
+        "/api/incidents",
+        json={"title": "GIS fire", "hazard_type": "wildfire", "location": "GIS sector", "latitude": 12.3, "longitude": 45.6, "source_id": "test", "external_id": "gis-1"},
+    )
+    incident_id = incident_response.json()["id"]
+
+    geojson = client.get("/api/incidents/geojson?min_lat=12&min_lng=45&max_lat=13&max_lng=46")
+    assert geojson.status_code == 200
+    assert geojson.json()["features"][0]["id"] == incident_id
+    assert geojson.json()["features"][0]["properties"]["source_id"] == "test"
+
+    exported = client.get("/api/incidents/export?format=csv")
+    assert exported.status_code == 200
+    assert "source_id" in exported.text
+    assert incident_id in exported.text
