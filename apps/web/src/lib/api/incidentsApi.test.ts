@@ -39,6 +39,8 @@ describe('incidentsApi - normalizeIncident', () => {
     expect(normalized.roadsAffected).toBe(0);
     expect(normalized.districtsAffected).toBe(0);
     expect(normalized.riskScore).toBe(85);
+    expect(normalized.confidence).toBe(0.95);
+    expect(normalized.provenance?.dataStatus).toBe('estimated');
     expect(normalized.overview).toBeDefined();
     expect(normalized.details).toBeDefined();
   });

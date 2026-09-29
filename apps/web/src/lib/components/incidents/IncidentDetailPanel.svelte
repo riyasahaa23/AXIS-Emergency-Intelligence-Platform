@@ -72,6 +72,12 @@
         <span>Last updated: {$selectedIncident.relativeTime}</span>
         <span class="text-[#00E5FF] font-semibold">CONFIDENCE: {Math.round($selectedIncident.confidence * 100)}%</span>
       </div>
+      <div class="mt-1 flex items-center justify-between text-[9px] uppercase tracking-wider">
+        <span class="text-[#8BA1B8]">Source: {$selectedIncident.provenance?.sourceId || 'derived'}</span>
+        <span class={($selectedIncident.provenance?.dataStatus || 'estimated') === 'live' ? 'text-emerald-400' : 'text-amber-400'}>
+          {$selectedIncident.provenance?.dataStatus || 'estimated'}
+        </span>
+      </div>
     </div>
 
     <!-- Navigation Tabs (OVERVIEW | IMPACT | FORECAST | RESPONSE) -->

@@ -72,6 +72,7 @@ export function normalizeIncident(raw: any): HazardIncident {
     ]
   };
 
+  const confidence = raw.confidence == null ? 0 : Number(raw.confidence) > 1 ? Number(raw.confidence) / 100 : Number(raw.confidence);
   return {
     id: raw.id,
     name: raw.title || raw.name || 'Emergency Event',
@@ -91,7 +92,7 @@ export function normalizeIncident(raw: any): HazardIncident {
     relativeTime,
     timestamp,
     riskScore: Math.round(numericSev),
-    confidence: raw.confidence ?? 0,
+    confidence,
     provenance: {
       sourceId: raw.source_id,
       externalId: raw.external_id,
