@@ -19,6 +19,7 @@ from app.api.routes import (
     scenarios,
     telemetry,
     notifications,
+    audit,
 )
 from app.auth.gateway import install_gateway
 from app.auth.service import AuthService
@@ -209,4 +210,5 @@ app.include_router(satellite.router)
 app.include_router(data.router)
 app.include_router(telemetry.router)
 app.include_router(notifications.router)
+app.include_router(audit.router)
 app.include_router(jobs.router)
