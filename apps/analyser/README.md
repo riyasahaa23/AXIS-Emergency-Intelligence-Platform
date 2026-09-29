@@ -66,7 +66,7 @@ Run migrations after every fresh deployment:
 uv run python scripts/migrate.py
 ```
 
-The current migration head is `0020_incident_provenance`. Run migrations after
+The current migration head is `0022_response_plans`. Run migrations after
 every fresh deployment and before enabling durable live feeds.
 
 Live incidents preserve provenance fields including `source_id`, `external_id`,
