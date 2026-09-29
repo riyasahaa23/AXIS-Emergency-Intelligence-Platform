@@ -66,7 +66,14 @@ Run migrations after every fresh deployment:
 uv run python scripts/migrate.py
 ```
 
-The current migration head is `0016_ingestion_idempotency`.
+The current migration head is `0020_incident_provenance`. Run migrations after
+every fresh deployment and before enabling durable live feeds.
+
+Live incidents preserve provenance fields including `source_id`, `external_id`,
+`confidence`, `data_status`, `observed_at`, and `last_seen_at`. Missing source
+coordinates may still be deterministically estimated, but the API now keeps
+that distinction available to clients instead of presenting every value as
+authoritative live telemetry.
 
 `/health/live` checks process liveness. `/health/ready` reports PostgreSQL
 readiness and returns a degraded in-memory status during development when the
