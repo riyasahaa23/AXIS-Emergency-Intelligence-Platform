@@ -84,7 +84,7 @@
     <!-- Section 1: Active Incidents -->
     <div class="mb-4">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-semibold text-white">Active Incidents</span>
+        <span class="text-xs font-semibold text-white">Active Incidents ({$telemetry.activeIncidents})</span>
         <button
           on:click={() => activeNavSection.set('incidents')}
           class="text-[10px] font-mono text-[#00E5FF] hover:underline cursor-pointer bg-transparent border-0 p-0"
@@ -94,7 +94,7 @@
       </div>
 
       <div class="space-y-2">
-        {#each $incidents as inc}
+        {#each $incidents.slice(0, 6) as inc}
           <button
             on:click={() => {
               selectIncident(inc);
@@ -168,6 +168,11 @@
             </div>
           </button>
         {/each}
+        {#if $incidents.length === 0}
+          <div class="rounded-xl border border-white/10 bg-[#061425]/50 p-4 text-xs text-[#8BA1B8]">
+            Waiting for live incident feeds…
+          </div>
+        {/if}
       </div>
     </div>
 

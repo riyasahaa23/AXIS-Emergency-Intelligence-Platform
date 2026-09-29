@@ -19,6 +19,8 @@ class IncidentCreate(BaseModel):
     exposure: float = Field(default=50, ge=0, le=100)
     population: int = Field(default=0, ge=0)
     vulnerability: float = Field(default=50, ge=0, le=100)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
 class IncidentUpdate(BaseModel):

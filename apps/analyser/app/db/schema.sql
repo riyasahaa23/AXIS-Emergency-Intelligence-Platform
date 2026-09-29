@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS incidents (
     exposure DOUBLE PRECISION NOT NULL CHECK (exposure BETWEEN 0 AND 100),
     population BIGINT NOT NULL DEFAULT 0 CHECK (population >= 0),
     vulnerability DOUBLE PRECISION NOT NULL CHECK (vulnerability BETWEEN 0 AND 100),
+    latitude DOUBLE PRECISION CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION CHECK (longitude BETWEEN -180 AND 180),
     status TEXT NOT NULL DEFAULT 'active',
     version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
     geom GEOGRAPHY(POINT, 4326),
@@ -62,6 +64,18 @@ CREATE TABLE IF NOT EXISTS incidents (
 );
 
 CREATE INDEX IF NOT EXISTS incidents_geom_idx ON incidents USING GIST (geom);
+
+CREATE TABLE IF NOT EXISTS live_incident_keys (
+    source_id TEXT NOT NULL,
+    external_id TEXT NOT NULL,
+    incident_id TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+    first_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (source_id, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS live_incident_keys_incident_idx
+    ON live_incident_keys(incident_id);
 
 CREATE TABLE IF NOT EXISTS satellite_observations (
     id BIGSERIAL PRIMARY KEY,

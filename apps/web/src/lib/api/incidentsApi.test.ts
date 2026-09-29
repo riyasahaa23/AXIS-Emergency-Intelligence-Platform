@@ -48,4 +48,33 @@ describe('incidentsApi - normalizeIncident', () => {
     expect(normalizeIncident({ severity: 50 }).severity).toBe('moderate');
     expect(normalizeIncident({ severity: 20 }).severity).toBe('low');
   });
+
+  it('derives incident-specific geometry and projections for raw live records', () => {
+    const flood = normalizeIncident({
+      id: 'live-flood-1',
+      title: 'Flood A',
+      hazard_type: 'flood',
+      location: 'Region A',
+      latitude: 23.5,
+      longitude: 90.4,
+      severity: 82,
+      population: 900000,
+      created_at: '2026-09-29T05:00:00Z'
+    });
+    const wildfire = normalizeIncident({
+      id: 'live-fire-2',
+      title: 'Wildfire B',
+      hazard_type: 'wildfire',
+      location: 'Region B',
+      latitude: 34.1,
+      longitude: -118.2,
+      severity: 82,
+      population: 900000,
+      created_at: '2026-09-29T06:00:00Z'
+    });
+
+    expect(flood.geometry?.floodExtent).not.toEqual(wildfire.geometry?.floodExtent);
+    expect(flood.forecast?.timeline).not.toEqual(wildfire.forecast?.timeline);
+    expect(flood.forecast?.trendSummary).toContain('model projection');
+  });
 });

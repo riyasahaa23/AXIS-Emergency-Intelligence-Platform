@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { MOCK_INCIDENTS } from '../mock/incidents';
 import type { HazardIncident, HazardType, SeverityLevel } from '../types';
 import { fetchIncidents } from '../api/incidentsApi';
@@ -120,6 +120,11 @@ export async function syncIncidentsFromBackend() {
     const data = await fetchIncidents();
     if (Array.isArray(data)) {
       incidents.set(data);
+      // Open the geospatial intelligence view on the newest live incident so
+      // the incidents workspace is useful immediately after loading.
+      if (data.length > 0 && !get(selectedIncidentId)) {
+        selectIncident(data[0]);
+      }
     }
   } catch (err) {
     if (!MOCK_FALLBACK_ENABLED) incidents.set([]);

@@ -39,6 +39,14 @@ export const isIncidentSimulateModalOpen = writable<boolean>(false);
 export const isIncidentPlanModalOpen = writable<boolean>(false);
 export const isUploadDataModalOpen = writable<boolean>(false);
 
+export async function syncTelemetryFromBackend() {
+  try {
+    telemetry.set(await fetchTelemetry());
+  } catch (error) {
+    console.warn('[systemStore] telemetry unavailable:', error);
+  }
+}
+
 export function openIncidentAnalyzeModal() {
   isIncidentAnalyzeModalOpen.set(true);
 }
@@ -93,9 +101,7 @@ export function toggleIncidentTelemetry() {
 
 // Live UTC time updater
 if (typeof window !== 'undefined') {
-  fetchTelemetry()
-    .then((summary) => telemetry.set(summary))
-    .catch((error) => console.warn('[systemStore] telemetry unavailable:', error));
+  syncTelemetryFromBackend();
 
   setInterval(() => {
     const now = new Date();
@@ -108,4 +114,9 @@ if (typeof window !== 'undefined') {
     const seconds = String(now.getUTCSeconds()).padStart(2, '0');
     currentUtcTime.set(`${month} ${day}, ${year} ${hours}:${minutes}:${seconds} UTC`);
   }, 1000);
+
+  // Live providers poll the backend independently. Refresh the dashboard
+  // after each provider cycle so new incidents and aggregate counts appear
+  // without a full-page reload.
+  setInterval(syncTelemetryFromBackend, 60_000);
 }

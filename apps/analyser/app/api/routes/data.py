@@ -2,6 +2,7 @@ import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.api.routes.telemetry import build_telemetry_summary
 from app.audit.service import record_audit
 from app.auth.dependencies import require_scope
 from app.ingestion.client import SourceNotConfigured
@@ -14,28 +15,21 @@ router = APIRouter(prefix="/api/data", tags=["data-ingestion"])
 
 @router.get("/telemetry", dependencies=[Depends(require_scope("read"))])
 async def telemetry_summary(request: Request):
-    """Return the operational summary from the configured incident store."""
-    store = request.app.state.incident_manager.store
-    incidents = store.list(limit=200, offset=0)
-    incidents = await incidents if hasattr(incidents, "__await__") else incidents
-    return {
-        "satellitesOnline": 0,
-        "weatherFeedsStatus": "Degraded" if not incidents else "Live",
-        "groundSensors": 0,
-        "dataSources": len(SOURCE_REGISTRY),
-        "activeIncidents": sum(1 for incident in incidents if incident.status.value == "active"),
-        "highRisk": sum(1 for incident in incidents if incident.severity >= 60),
-        "countriesAffected": 0,
-        "peopleAffected": str(sum(incident.population for incident in incidents)),
-        "responseTeams": 0,
-        "activeShelters": 0,
-        "criticalResourcesPct": 0,
-    }
+    """Compatibility alias for the reference-compatible telemetry contract."""
+    return await build_telemetry_summary(request, reference_defaults=False)
 
 
 @router.get("/sources", dependencies=[Depends(require_scope("read"))])
 async def list_sources():
     return list(SOURCE_REGISTRY.values())
+
+
+@router.get("/live/status", dependencies=[Depends(require_scope("read"))])
+async def live_feed_status(request: Request):
+    ingestor = getattr(request.app.state, "live_ingestor", None)
+    if ingestor is None:
+        return {"enabled": False, "providers": {}}
+    return ingestor.status
 
 
 @router.get("/health", dependencies=[Depends(require_scope("read"))])

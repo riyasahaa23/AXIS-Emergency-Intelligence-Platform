@@ -10,7 +10,7 @@
     openAxisCentral,
     submitCommand
   } from '../../stores/commandStore';
-  import { dataFeedStatus, probeBackend } from '../../api';
+  import { dataFeedStatus, probeBackend, MOCK_FALLBACK_ENABLED } from '../../api';
   import { onMount } from 'svelte';
 
   onMount(() => {
@@ -115,11 +115,11 @@
     <button
       on:click={() => probeBackend(true)}
       class="flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer transition-all hover:scale-105 {$dataFeedStatus.isLive ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' : 'bg-cyan-500/15 border border-cyan-500/30 text-[#00E5FF]'}"
-      title={$dataFeedStatus.isLive ? `Live Backend Connected (${$dataFeedStatus.latencyMs}ms) · Click to re-probe` : 'Autonomous Mock Fallback Engine · Click to probe real backend'}
+      title={$dataFeedStatus.isLive ? `Live backend connected (${$dataFeedStatus.latencyMs}ms) · Click to re-probe` : MOCK_FALLBACK_ENABLED ? 'DEMO DATA: synthetic dataset, not live · Click to retry backend' : 'Backend unavailable · Click to retry'}
     >
       <span class="w-1.5 h-1.5 rounded-full {$dataFeedStatus.isLive ? 'bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse' : 'bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]'}"></span>
       <span class="font-bold tracking-widest text-[10px]">
-        {$dataFeedStatus.isLive ? 'LIVE DATA' : 'FALLBACK DATA'}
+        {$dataFeedStatus.isLive ? 'LIVE DATA' : MOCK_FALLBACK_ENABLED ? 'DEMO DATA' : 'BACKEND OFFLINE'}
       </span>
     </button>
 

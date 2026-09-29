@@ -11,6 +11,11 @@ def clear_settings_cache(monkeypatch):
     monkeypatch.setenv("AXIS_ENVIRONMENT", "development")
     monkeypatch.setenv("AXIS_ALLOW_ANONYMOUS_DEMO", "true")
     monkeypatch.setenv("AXIS_ALLOW_IN_MEMORY_FALLBACK", "true")
+    # Keep unit tests deterministic and independent of a developer's running
+    # PostgreSQL/Redis containers. Integration coverage supplies these URLs
+    # explicitly when real services are intended.
+    monkeypatch.setenv("AXIS_DATABASE_URL", "")
+    monkeypatch.setenv("AXIS_REDIS_URL", "")
     monkeypatch.setenv("AXIS_FIRMS_MAP_KEY", "")
     from app.core.config import get_settings
 

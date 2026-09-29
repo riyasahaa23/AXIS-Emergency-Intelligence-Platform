@@ -53,6 +53,13 @@ Production must set `AXIS_ALLOW_IN_MEMORY_FALLBACK=false`; database and Redis
 startup failures then fail the process instead of silently degrading to local
 in-memory state.
 
+The development launcher enables non-blocking live incident polling for USGS
+earthquakes and GDACS alerts after PostgreSQL and Redis are ready. Configure it
+with `AXIS_LIVE_DATA_ENABLED`, `AXIS_LIVE_DATA_POLL_SECONDS`, and
+`AXIS_LIVE_DATA_MAX_ITEMS`. Provider failures are isolated and source/external
+identities are recorded in `live_incident_keys` so repeated polls do not create
+duplicate incidents.
+
 Run migrations after every fresh deployment:
 
 ```bash

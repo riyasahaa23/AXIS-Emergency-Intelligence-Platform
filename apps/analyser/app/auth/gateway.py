@@ -52,6 +52,14 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("x-request-id") or str(uuid4())
         request.state.request_id = request_id
 
+        # CORS preflight is not an application data request. Let the CORS
+        # middleware answer it before API authentication/rate limiting; the
+        # actual GET/POST request remains protected below.
+        if request.method == "OPTIONS":
+            response = await call_next(request)
+            response.headers["x-request-id"] = request_id
+            return response
+
         # Preserve the documented versioned API contract while the internal
         # routers continue to use the stable canonical path.
         if request.url.path.startswith("/api/v1/"):
@@ -60,7 +68,7 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         if request.scope["path"].startswith("/api/"):
             identity = request.client.host if request.client else "unknown"
             try:
-                allowed, retry_after = await self._allow(identity)
+                allowed, retry_after = await self._allow(identity, settings)
             except RuntimeError:
                 return self._denied(request_id, "RATE_LIMIT_UNAVAILABLE", "Rate limiting is temporarily unavailable", 503)
             if not allowed:
@@ -103,13 +111,14 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         response.headers["x-request-id"] = request_id
         return response
 
-    async def _allow(self, identity: str) -> tuple[bool, int]:
-        if self.settings.redis_url:
+    async def _allow(self, identity: str, settings=None) -> tuple[bool, int]:
+        active_settings = settings or self.settings
+        if active_settings.redis_url:
             try:
                 if self.redis is None:
                     from redis.asyncio import Redis
 
-                    self.redis = Redis.from_url(self.settings.redis_url, decode_responses=True)
+                    self.redis = Redis.from_url(active_settings.redis_url, decode_responses=True)
                 bucket = int(time.time() // 60)
                 key = f"axis:rate:{hashlib.sha256(identity.encode()).hexdigest()}:{bucket}"
                 count = await self.redis.incr(key)
@@ -119,7 +128,7 @@ class GatewayMiddleware(BaseHTTPMiddleware):
                     return False, 60 - (int(time.time()) % 60)
                 return True, 0
             except Exception:  # noqa: BLE001 - local fallback is explicitly opt-in
-                if self.settings.environment == "production" or not self.settings.allow_in_memory_fallback:
+                if active_settings.environment == "production" or not active_settings.allow_in_memory_fallback:
                     raise RuntimeError("Redis is required for API rate limiting in this runtime") from None
                 return self.limiter.allow(identity)
         return self.limiter.allow(identity)

@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     allow_in_memory_fallback: bool = True
     auto_migrate: bool = False
     scheduler_poll_seconds: int = 5
+    live_data_enabled: bool = False
+    live_data_poll_seconds: int = 900
+    live_data_max_items: int = 20
     rate_limit_per_minute: int = 120
     websocket_rate_limit_per_minute: int = 20
     cors_allowed_origins: str = "http://localhost:5180,http://127.0.0.1:5180"

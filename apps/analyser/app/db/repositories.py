@@ -102,10 +102,17 @@ class PostgresIncidentRepository:
     @staticmethod
     def _incident(row) -> Incident:
         values = dict(row)
+        latitude = values.get("latitude")
+        longitude = values.get("longitude")
+        if latitude is None or longitude is None:
+            from app.geo.resolver import resolve_coordinates
+
+            latitude, longitude = resolve_coordinates(values["location"], values["title"])
         return Incident(
             id=values["id"], title=values["title"], hazard_type=values["hazard_type"],
             location=values["location"], severity=values["severity"], exposure=values["exposure"],
             population=values["population"], vulnerability=values["vulnerability"],
+            latitude=latitude, longitude=longitude,
             status=IncidentStatus(values["status"]), created_at=values["created_at"], updated_at=values["updated_at"],
             version=values.get("version", 1),
         )
@@ -117,8 +124,10 @@ class PostgresIncidentRepository:
         async with self.engine.begin() as connection:
             result = await connection.execute(
                 text("""INSERT INTO incidents
-                    (id, title, hazard_type, location, severity, exposure, population, vulnerability, status, created_at, updated_at)
-                    VALUES (:id, :title, :hazard_type, :location, :severity, :exposure, :population, :vulnerability, :status, :created_at, :updated_at)
+                    (id, title, hazard_type, location, severity, exposure, population, vulnerability,
+                     latitude, longitude, status, created_at, updated_at)
+                    VALUES (:id, :title, :hazard_type, :location, :severity, :exposure, :population, :vulnerability,
+                            :latitude, :longitude, :status, :created_at, :updated_at)
                     RETURNING *"""),
                 incident.model_dump(mode="python"),
             )
@@ -141,7 +150,7 @@ class PostgresIncidentRepository:
 
         async with self.engine.connect() as connection:
             result = await connection.execute(
-                text("SELECT * FROM incidents ORDER BY created_at LIMIT :limit OFFSET :offset"),
+                text("SELECT * FROM incidents ORDER BY created_at DESC LIMIT :limit OFFSET :offset"),
                 {"limit": limit, "offset": offset},
             )
             return [self._incident(row) for row in result.mappings().all()]

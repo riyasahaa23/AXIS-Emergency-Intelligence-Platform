@@ -22,11 +22,33 @@
   let showRivers = true;
   let showCities = true;
   let showLayersMenu = false;
+  let lastIncidentId: string | null = null;
 
   // Pulse animation phase
   let animTime = 0;
 
   const timelineSteps = ['-24h', '-12h', 'NOW', '+24h', '+48h', '+72h'];
+
+  // Every incident gets a fresh fitted view. This keeps small live footprints
+  // readable without changing the user's manual zoom while they inspect it.
+  $: if ($selectedIncident?.id !== lastIncidentId) {
+    lastIncidentId = $selectedIncident?.id ?? null;
+    if ($selectedIncident) {
+      zoom = 1.4;
+      panX = 0;
+      panY = 0;
+    }
+  }
+
+  function projectedRisk(incident: HazardIncident, index: number) {
+    return incident.forecast?.timeline?.[index]?.severityScore
+      ?? Math.min(99, incident.riskScore + [0, 5, 8, 3][index]);
+  }
+
+  function projectedArea(incident: HazardIncident | null, index: number) {
+    if (!incident) return 0;
+    return incident.forecast?.timeline?.[index]?.areaKm2 ?? Math.max(1, Math.round(incident.riskScore * (1 + index * 0.08)));
+  }
 
   function resetView() {
     zoom = 1.0;
@@ -62,6 +84,23 @@
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
     zoom = Math.max(0.5, Math.min(3.0, zoom * zoomFactor));
+  }
+
+  function fittedGeoScale(incident: HazardIncident, cssW: number, cssH: number): number {
+    const geom = incident.geometry;
+    const points: Array<[number, number]> = [
+      ...(geom?.floodExtent || []),
+      ...(geom?.secondaryExtent || []),
+      ...(geom?.highRiskZones || []).map((zone) => zone.coords),
+      ...(geom?.affectedDistricts || []).map((district) => district.coords),
+      ...(geom?.cities || []).map((city) => city.coords)
+    ];
+    if (points.length < 2) return Math.max(145, Math.min(360, Math.min(cssW, cssH) * 0.68));
+
+    const lngs = points.map(([lng]) => lng);
+    const lats = points.map(([, lat]) => lat);
+    const span = Math.max(Math.max(...lngs) - Math.min(...lngs), Math.max(...lats) - Math.min(...lats), 0.8);
+    return Math.max(130, Math.min(420, (Math.min(cssW, cssH) * 0.9) / span));
   }
 
   onMount(() => {
@@ -145,8 +184,9 @@
     const centerLng = geom?.center ? geom.center[0] : $selectedIncident.coords.lng;
     const centerLat = geom?.center ? geom.center[1] : $selectedIncident.coords.lat;
 
-    // Scale factor to map degrees to pixels
-    const geoScale = 140;
+    // Responsive equirectangular projection: keep the incident extent visible
+    // on laptop and wide-screen layouts instead of using a fixed pixel scale.
+    const geoScale = fittedGeoScale($selectedIncident, cssW, cssH);
 
     function project(lng: number, lat: number): [number, number] {
       const px = (lng - centerLng) * geoScale;
@@ -357,6 +397,35 @@
     </div>
   </div>
 
+  <!-- Incident summary and forward risk projection -->
+  {#if $selectedIncident}
+    <div class="absolute left-3.5 top-[62px] z-20 w-[265px] rounded-xl border border-white/10 bg-[#030a16]/90 p-2.5 font-mono shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md">
+      <div class="mb-1 text-[9px] font-bold uppercase tracking-wider text-[#00E5FF]">Incident Summary</div>
+      <div class="line-clamp-2 text-[11px] leading-snug text-white">
+        {$selectedIncident.overview?.summary || $selectedIncident.details.description}
+      </div>
+      <div class="mt-2 border-t border-white/10 pt-2">
+        <div class="mb-1 flex items-center justify-between">
+          <span class="text-[9px] uppercase tracking-wider text-[#8BA1B8]">Risk Level Projection</span>
+          <span class="text-[10px] font-bold uppercase {$selectedIncident.severity === 'critical' ? 'text-red-400' : $selectedIncident.severity === 'high' ? 'text-amber-400' : 'text-[#00E5FF]'}">
+            {$selectedIncident.overview?.riskLevel || $selectedIncident.severity}
+          </span>
+        </div>
+        <div class="grid grid-cols-4 gap-1 text-center">
+          {#each ['NOW', '+24H', '+48H', '+72H'] as label, index}
+            <div class="rounded bg-white/5 px-1 py-1">
+              <div class="text-[8px] text-[#8BA1B8]">{label}</div>
+              <div class="text-[11px] font-bold {projectedRisk($selectedIncident, index) >= 80 ? 'text-red-400' : projectedRisk($selectedIncident, index) >= 60 ? 'text-amber-400' : 'text-[#00E5FF]'}">{projectedRisk($selectedIncident, index)}</div>
+            </div>
+          {/each}
+        </div>
+        <div class="mt-1 truncate text-[9px] text-[#8BA1B8]">
+          {$selectedIncident.overview?.projectedConditions || 'Continuous multi-agency monitoring active.'}
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Floating Right Map Controls (Zoom, Layers, Recenter) -->
   <div class="absolute right-3.5 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1.5 p-1 rounded-xl bg-[#030a16]/90 backdrop-blur-md border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.7)]">
     <button
@@ -481,9 +550,9 @@
 
     <!-- Forecast Active Stat -->
     <div class="shrink-0 text-right hidden sm:block">
-      <span class="text-[9px] text-[#8BA1B8] uppercase block">Modeled Inundation</span>
+      <span class="text-[9px] text-[#8BA1B8] uppercase block">Modeled Footprint</span>
       <span class="text-xs font-bold text-white">
-        {$timelineStep === 'NOW' ? '1,420 km²' : $timelineStep === '+24h' ? '1,750 km²' : $timelineStep === '+48h' ? '1,980 km²' : '1,820 km²'}
+        {projectedArea($selectedIncident, Math.max(0, timelineSteps.indexOf($timelineStep)))} km²
       </span>
     </div>
 

@@ -24,6 +24,7 @@
   let hazardsGroup: THREE.Group;
   let raycaster = new THREE.Raycaster();
   let mouse = new THREE.Vector2();
+  let unsubscribeIncidents: (() => void) | undefined;
 
   // Dimming transition for central AXIS activation
   let currentDimFactor = 1.0;
@@ -50,6 +51,11 @@
 
   onMount(() => {
     initScene();
+    // The API loads incidents asynchronously. Rebuild the marker layer when
+    // live data arrives instead of only reading the initial empty store.
+    unsubscribeIncidents = incidents.subscribe(() => {
+      if (hazardsGroup) createHazardOverlays(5.2);
+    });
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
@@ -69,6 +75,7 @@
     return () => {
       unsubscribeFocus();
       unsubscribeAxis();
+      unsubscribeIncidents?.();
       window.removeEventListener('resize', onWindowResize);
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
@@ -360,10 +367,23 @@
   }
 
   function createHazardOverlays(earthRadius: number) {
+    hazardsGroup.traverse((object) => {
+      const disposable = object as THREE.Mesh;
+      if (disposable.geometry) disposable.geometry.dispose();
+      if (disposable.material) {
+        const materials = Array.isArray(disposable.material) ? disposable.material : [disposable.material];
+        materials.forEach((material) => material.dispose());
+      }
+    });
+    hazardsGroup.clear();
     interactiveMarkers.length = 0;
+    cycloneMeshes.length = 0;
+    rippleMeshes.length = 0;
 
     $incidents.forEach((inc) => {
-      const pos = latLngToVector3(inc.coords.lat, inc.coords.lng, earthRadius + 0.03);
+      const lat = Number.isFinite(inc.coords.lat) ? Math.max(-90, Math.min(90, inc.coords.lat)) : 0;
+      const lng = Number.isFinite(inc.coords.lng) ? Math.max(-180, Math.min(180, inc.coords.lng)) : 0;
+      const pos = latLngToVector3(lat, lng, earthRadius + 0.03);
       const surfaceNormal = pos.clone().normalize();
 
       if (inc.type === 'flood') {

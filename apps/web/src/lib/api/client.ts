@@ -17,15 +17,17 @@ export interface DataFeedStatus {
 
 // Mocks are available for local demos, but production must not present
 // synthetic data as live operational data.
-export const MOCK_FALLBACK_ENABLED = import.meta.env?.VITE_ENABLE_MOCK_FALLBACK === 'true'
-  || (import.meta.env?.DEV === true && import.meta.env?.VITE_ENABLE_MOCK_FALLBACK !== 'false');
+export const MOCK_FALLBACK_ENABLED = !import.meta.env?.PROD && (
+  import.meta.env?.VITE_ENABLE_MOCK_FALLBACK === 'true'
+  // Keep unit tests deterministic, but never mask a backend failure in the
+  // normal development dashboard. Live data is the default for `npm run dev`.
+  || import.meta.env?.MODE === 'test'
+);
 
 // Configurable backend URL with Vite environment variable support
 export const BACKEND_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
   ? (import.meta.env.VITE_API_URL as string)
-  : (typeof window !== 'undefined' && window.location.hostname === 'localhost'
-      ? 'http://localhost:8000'
-      : 'http://127.0.0.1:8000');
+  : (typeof window !== 'undefined' ? '' : 'http://127.0.0.1:8000');
 
 export const dataFeedStatus = writable<DataFeedStatus>({
   source: MOCK_FALLBACK_ENABLED ? 'SIMULATED_MOCK' : 'UNAVAILABLE',

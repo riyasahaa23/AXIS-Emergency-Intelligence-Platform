@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from inspect import isawaitable
 
@@ -15,6 +16,7 @@ from app.api.routes import (
     responses,
     satellite,
     scenarios,
+    telemetry,
 )
 from app.auth.gateway import install_gateway
 from app.core.config import get_cors_origins, get_settings, validate_runtime_settings
@@ -25,6 +27,7 @@ from app.core.rate_limit import SlidingWindowRateLimiter
 from app.db.database import create_async_engine, dispose_engine
 from app.db.repositories import PostgresIncidentRepository
 from app.db.schema import initialize_schema
+from app.incident.live_feeds import LiveIncidentIngestor
 from app.incident.manager import IncidentManager
 from app.incident.state import InMemoryIncidentStore
 from app.ingestion.client import SourceClient
@@ -131,7 +134,22 @@ async def lifespan(application: FastAPI):
     await application.state.ingestion_scheduler.start()
     application.state.jobs = AnalysisJobManager(application, database_engine, settings.redis_url)
     await application.state.jobs.start()
+    live_data_task = None
+    if settings.live_data_enabled:
+        live_ingestor = LiveIncidentIngestor(
+            application.state.incident_manager,
+            application.state.source_client,
+            database_engine,
+            http_client,
+            settings.live_data_poll_seconds,
+            settings.live_data_max_items,
+        )
+        application.state.live_ingestor = live_ingestor
+        live_data_task = asyncio.create_task(live_ingestor.run_forever(), name="axis-live-data")
     yield
+    if live_data_task is not None:
+        live_data_task.cancel()
+        await asyncio.gather(live_data_task, return_exceptions=True)
     await application.state.ingestion_scheduler.stop()
     await application.state.ingestion_worker.stop()
     await application.state.jobs.stop()
@@ -181,4 +199,5 @@ app.include_router(responses.router)
 app.include_router(websocket.router)
 app.include_router(satellite.router)
 app.include_router(data.router)
+app.include_router(telemetry.router)
 app.include_router(jobs.router)

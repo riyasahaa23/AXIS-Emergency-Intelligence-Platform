@@ -21,6 +21,11 @@ class InMemoryIncidentStore:
         self._events: dict[str, list] = {}
 
     def create(self, data: IncidentCreate) -> Incident:
+        if data.latitude is None or data.longitude is None:
+            from app.geo.resolver import resolve_coordinates
+
+            latitude, longitude = resolve_coordinates(data.location, data.title)
+            data = data.model_copy(update={"latitude": latitude, "longitude": longitude})
         incident = Incident(**data.model_dump())
         self._incidents[incident.id] = incident
         self._events[incident.id] = []

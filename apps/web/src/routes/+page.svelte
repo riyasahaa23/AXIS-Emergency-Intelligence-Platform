@@ -4,6 +4,7 @@
   import CockpitFrame from '$components/cockpit/CockpitFrame.svelte';
   import QuickTelemetry from '$components/widgets/QuickTelemetry.svelte';
   import MonitoringBadge from '$components/widgets/MonitoringBadge.svelte';
+  import GeospatialIntelligencePanel from '$components/widgets/GeospatialIntelligencePanel.svelte';
   import RiskLegend from '$components/widgets/RiskLegend.svelte';
   import AxisOrb from '$components/widgets/AxisOrb.svelte';
   import IncidentDetailCard from '$components/incidents/IncidentDetailCard.svelte';
@@ -24,7 +25,7 @@
   import UploadDataModal from '$components/command/UploadDataModal.svelte';
   import { selectedIncident, syncIncidentsFromBackend } from '$stores/incidentStore';
   import { isAxisCentralActive } from '$stores/commandStore';
-  import { activeNavSection } from '$stores/systemStore';
+  import { activeNavSection, syncTelemetryFromBackend } from '$stores/systemStore';
   import { onMount } from 'svelte';
 
   let GlobeView: typeof import('$three/GlobeView.svelte').default | null = null;
@@ -36,7 +37,11 @@
       GlobeView = module.default;
     });
 
-    syncIncidentsFromBackend();
+    const refreshLiveDashboard = async () => {
+      await Promise.all([syncIncidentsFromBackend(), syncTelemetryFromBackend()]);
+    };
+    refreshLiveDashboard();
+    const liveRefreshTimer = window.setInterval(refreshLiveDashboard, 60_000);
 
     // Bidirectional URL deep-linking: Read initial section from hash or query params
     const parseUrlSection = () => {
@@ -78,6 +83,7 @@
       window.removeEventListener('popstate', handleLocationChange);
       window.removeEventListener('hashchange', handleLocationChange);
       unsubscribe();
+      window.clearInterval(liveRefreshTimer);
     };
   });
 </script>
@@ -153,6 +159,11 @@
         <!-- Floating Real-Time Monitoring Badge (Top Right of Globe) -->
         <div class="absolute top-4 right-5 z-20 pointer-events-auto">
           <MonitoringBadge />
+        </div>
+
+        <!-- Live geospatial intelligence graph and recent incident distribution -->
+        <div class="absolute top-[205px] right-5 z-20 hidden pointer-events-auto xl:block">
+          <GeospatialIntelligencePanel />
         </div>
 
         <!-- Floating Bottom Section Over Globe (Unobstructed Viewport) -->
