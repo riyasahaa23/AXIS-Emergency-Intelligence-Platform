@@ -78,3 +78,29 @@ async def test_live_feeds_are_normalized_and_deduplicated():
     assert {item.data_status for item in manager.created} == {"live"}
     assert all(item.external_id for item in manager.created)
     assert all(item.observed_at is not None and item.last_seen_at is not None for item in manager.created)
+
+
+@pytest.mark.asyncio
+async def test_live_feed_circuit_breaker_opens_after_repeated_provider_failures():
+    class FailingSource:
+        async def fetch(self, source_id, request):
+            raise RuntimeError("provider unavailable")
+
+    ingestor = LiveIncidentIngestor(
+        FakeManager(),
+        FailingSource(),
+        database_engine=None,
+        http_client=httpx.AsyncClient(),
+        poll_seconds=30,
+    )
+    ingestor.sources = ("usgs_earthquakes",)
+
+    try:
+        for _ in range(3):
+            assert await ingestor.run_once() == 0
+        status = ingestor.status["providers"]["usgs_earthquakes"]
+        assert status["status"] == "circuit_open"
+        assert status["failure_count"] == 3
+        assert status["circuit_open_until"] is not None
+    finally:
+        await ingestor.http_client.aclose()

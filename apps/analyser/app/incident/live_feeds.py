@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, ClassVar
@@ -49,8 +50,10 @@ class LiveIncidentIngestor:
             "last_poll_started_at": None,
             "last_poll_finished_at": None,
             "last_created_count": 0,
-            "providers": {source: {"status": "pending", "last_error": None} for source in self.sources},
+            "providers": {source: {"status": "pending", "last_error": None, "failure_count": 0, "circuit_open_until": None, "latency_ms": None} for source in self.sources},
         }
+        self.circuit_failure_threshold = 3
+        self.circuit_cooldown_seconds = 60
 
     @property
     def status(self) -> dict[str, Any]:
@@ -71,6 +74,14 @@ class LiveIncidentIngestor:
         self._status["last_poll_started_at"] = datetime.now(UTC).isoformat()
         for source_id in self.sources:
             provider_status = self._status["providers"][source_id]
+            circuit_open_until = provider_status.get("circuit_open_until")
+            if circuit_open_until and time.time() < circuit_open_until:
+                provider_status["status"] = "circuit_open"
+                continue
+            if circuit_open_until:
+                provider_status["circuit_open_until"] = None
+                provider_status["status"] = "recovering"
+            started = time.perf_counter()
             provider_status.update({"status": "running", "last_attempt_at": datetime.now(UTC).isoformat(), "last_error": None})
             try:
                 payload = await asyncio.wait_for(self._fetch_payload(source_id), timeout=30)
@@ -95,12 +106,26 @@ class LiveIncidentIngestor:
                     "last_success_at": datetime.now(UTC).isoformat(),
                     "candidate_count": len(candidates),
                     "created_count": provider_created,
+                    "failure_count": 0,
+                    "circuit_open_until": None,
+                    "latency_ms": round((time.perf_counter() - started) * 1000, 1),
                 })
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001 - isolate each provider
                 logger.warning("Live feed %s failed: %s (%s)", source_id, exc, type(exc).__name__)
-                provider_status.update({"status": "error", "last_error": f"{type(exc).__name__}: {exc}"})
+                failure_count = int(provider_status.get("failure_count", 0)) + 1
+                provider_status.update({
+                    "status": "error",
+                    "last_error": f"{type(exc).__name__}: {exc}",
+                    "failure_count": failure_count,
+                    "latency_ms": round((time.perf_counter() - started) * 1000, 1),
+                })
+                if failure_count >= self.circuit_failure_threshold:
+                    provider_status.update({
+                        "status": "circuit_open",
+                        "circuit_open_until": time.time() + self.circuit_cooldown_seconds,
+                    })
         self._status["last_created_count"] = created
         self._status["last_poll_finished_at"] = datetime.now(UTC).isoformat()
         if created:
