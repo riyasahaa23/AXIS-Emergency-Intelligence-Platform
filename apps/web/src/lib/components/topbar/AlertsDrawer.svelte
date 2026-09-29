@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { isAlertsDrawerOpen, activeNavSection } from '../../stores/systemStore';
   import { selectIncident, incidents } from '../../stores/incidentStore';
+  import { fetchNotifications, markNotificationRead } from '../../api/notificationsApi';
 
   interface AlertItem {
     id: string;
@@ -61,6 +63,20 @@
 
   let activeFilter: 'ALL' | 'CRITICAL' | 'UNREAD' = 'ALL';
 
+  onMount(async () => {
+    const remote = await fetchNotifications();
+    const remoteAlerts: AlertItem[] = remote.map((item) => ({
+      id: item.id,
+      title: item.title,
+      message: item.message,
+      timestamp: item.created_at ? new Date(item.created_at).toLocaleString() : 'just now',
+      severity: item.severity,
+      read: item.read,
+      incidentId: item.incident_id
+    }));
+    if (remoteAlerts.length > 0) alerts = [...remoteAlerts, ...alerts.filter((item) => !remoteAlerts.some((remoteItem) => remoteItem.id === item.id))];
+  });
+
   $: filteredAlerts = alerts.filter((a) => {
     if (activeFilter === 'CRITICAL') return a.severity === 'critical';
     if (activeFilter === 'UNREAD') return !a.read;
@@ -75,6 +91,8 @@
 
   function toggleAlertRead(id: string) {
     alerts = alerts.map((a) => (a.id === id ? { ...a, read: !a.read } : a));
+    const selected = alerts.find((item) => item.id === id);
+    if (selected && selected.read && id.startsWith('NTF-')) void markNotificationRead(id).catch(() => undefined);
   }
 
   function clearAlert(id: string) {
