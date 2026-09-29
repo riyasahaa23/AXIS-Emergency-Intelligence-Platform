@@ -97,6 +97,7 @@ Required credentials/configuration:
 
 - `AXIS_FIRMS_MAP_KEY`: free NASA FIRMS map key
 - `AXIS_BHUVAN_WMS_URL`: the Bhuvan WMS endpoint/layer service selected for your use case
+- `AXIS_NOTIFICATION_WEBHOOK_URL`: optional HTTPS webhook for operator notifications; in-app notifications remain available when unset
 - Copernicus catalog search works through the configured catalog URL; authenticated imagery processing requires a CDSE client separately
 
 ## Object storage

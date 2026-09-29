@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from app.models.incident_actions import Notification
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 async def create_notification(request, notification: Notification) -> Notification:
@@ -14,6 +18,14 @@ async def create_notification(request, notification: Notification) -> Notificati
             await connection.execute(text("""INSERT INTO notifications
                 (id, recipient, title, message, severity, incident_id, read, created_at)
                 VALUES (:id, :recipient, :title, :message, :severity, :incident_id, :read, :created_at)"""), notification.model_dump(mode="python"))
+    webhook_url = getattr(getattr(request.app.state, "settings", None), "notification_webhook_url", "")
+    http_client = getattr(request.app.state, "http_client", None)
+    if webhook_url and http_client is not None:
+        try:
+            response = await http_client.post(webhook_url, json=notification.model_dump(mode="json"), timeout=5.0)
+            response.raise_for_status()
+        except Exception as exc:  # noqa: BLE001 - external notification must not break incident writes
+            logger.warning("Notification webhook delivery failed: %s", exc)
     return notification
 
 

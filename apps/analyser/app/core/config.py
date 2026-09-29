@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     live_data_max_items: int = 20
     rate_limit_per_minute: int = 120
     websocket_rate_limit_per_minute: int = 20
+    notification_webhook_url: str = ""
     cors_allowed_origins: str = "http://localhost:5180,http://127.0.0.1:5180"
     object_storage_dir: str = "data/object-store"
     object_storage_backend: str = "local"
